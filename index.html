@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
     <meta name="theme-color" content="#000000">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -11,67 +11,516 @@
     <link rel="apple-touch-icon" href="icon-192.png">
     <title>Fogueira Inventario</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
         body {
             background: #000;
             color: #C9A961;
-            font-family: Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif;
             min-height: 100vh;
+            min-height: 100dvh;
             display: flex;
             flex-direction: column;
+        }
+        
+        /* === HEADER === */
+        .app-header {
+            background: #0a0a0a;
+            border-bottom: 1px solid #C9A961;
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
-            padding: 20px;
-            text-align: center;
         }
-        h1 {
-            font-size: 32px;
-            margin-bottom: 16px;
+        .app-header h1 {
+            font-size: 20px;
             letter-spacing: 2px;
+            font-weight: bold;
         }
-        p {
-            font-size: 18px;
-            margin-bottom: 24px;
+        .conexion-indicador {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
             opacity: 0.8;
         }
-        .status {
+        .conexion-indicador .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4ade80;
+        }
+        .conexion-indicador.offline .dot { background: #fbbf24; }
+        
+        /* === CONTENIDO PRINCIPAL === */
+        .contenido {
+            flex: 1;
+            padding: 24px 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* === LOGIN === */
+        .vista-login {
+            max-width: 400px;
+            width: 100%;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            flex: 1;
+        }
+        .vista-login h2 {
+            text-align: center;
+            margin-bottom: 8px;
+            font-size: 24px;
+            letter-spacing: 1px;
+        }
+        .vista-login .subtitulo {
+            text-align: center;
+            opacity: 0.6;
+            margin-bottom: 32px;
+            font-size: 14px;
+        }
+        .campo {
+            margin-bottom: 16px;
+        }
+        .campo label {
+            display: block;
+            font-size: 13px;
+            margin-bottom: 6px;
+            opacity: 0.8;
+            letter-spacing: 0.5px;
+        }
+        .campo input {
+            width: 100%;
+            padding: 14px 16px;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            color: #C9A961;
+            font-size: 16px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .campo input:focus {
+            border-color: #C9A961;
+        }
+        .btn-principal {
+            width: 100%;
+            padding: 16px;
+            background: #C9A961;
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: opacity 0.2s;
+        }
+        .btn-principal:active { opacity: 0.8; }
+        .btn-principal:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        
+        .alerta {
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 16px;
+            display: none;
+        }
+        .alerta.error {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid #ef4444;
+            color: #fca5a5;
+        }
+        .alerta.exito {
+            background: rgba(74, 222, 128, 0.15);
+            border: 1px solid #4ade80;
+            color: #86efac;
+        }
+        .alerta.info {
+            background: rgba(201, 169, 97, 0.15);
+            border: 1px solid #C9A961;
+            color: #C9A961;
+        }
+        .alerta.visible { display: block; }
+        
+        /* === DASHBOARD POST-LOGIN === */
+        .vista-dashboard {
+            display: none;
+            flex: 1;
+            flex-direction: column;
+        }
+        .vista-dashboard.visible { display: flex; }
+        
+        .tarjeta-usuario {
             background: #1a1a1a;
             border: 1px solid #C9A961;
-            padding: 16px 24px;
-            border-radius: 8px;
-            margin-top: 20px;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
         }
-        .ok { color: #4ade80; }
+        .tarjeta-usuario h3 {
+            font-size: 18px;
+            margin-bottom: 4px;
+        }
+        .tarjeta-usuario .rol {
+            font-size: 12px;
+            opacity: 0.7;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+        }
+        .tarjeta-usuario .info-fila {
+            font-size: 13px;
+            opacity: 0.6;
+            margin-top: 4px;
+        }
+        
+        .acciones {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 16px;
+        }
+        .btn-secundario {
+            width: 100%;
+            padding: 14px;
+            background: transparent;
+            color: #C9A961;
+            border: 1px solid #C9A961;
+            border-radius: 8px;
+            font-size: 15px;
+            font-family: inherit;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-secundario:active {
+            background: rgba(201, 169, 97, 0.1);
+        }
+        
+        .btn-cerrar {
+            margin-top: auto;
+            width: 100%;
+            padding: 14px;
+            background: transparent;
+            color: #ef4444;
+            border: 1px solid #ef4444;
+            border-radius: 8px;
+            font-size: 15px;
+            font-family: inherit;
+            cursor: pointer;
+        }
+        
+        /* === LOADING === */
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(0,0,0,0.3);
+            border-top-color: #000;
+            border-radius: 50%;
+            animation: girar 0.6s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        @keyframes girar {
+            to { transform: rotate(360deg); }
+        }
+        
+        .versionado {
+            text-align: center;
+            font-size: 11px;
+            opacity: 0.4;
+            padding: 12px;
+        }
     </style>
 </head>
 <body>
-    <h1>FOGUEIRA</h1>
-    <p>Inventario Ciego — PWA v0.1</p>
-    <div class="status">
-        <p class="ok">✓ App cargada correctamente</p>
-        <p id="online">Verificando conexión...</p>
-    </div>
 
-    <script>
-        function updateStatus() {
-            const el = document.getElementById('online');
-            if (navigator.onLine) {
-                el.textContent = '🟢 Conectado';
-                el.style.color = '#4ade80';
+    <!-- Header -->
+    <header class="app-header">
+        <h1>FOGUEIRA</h1>
+        <div class="conexion-indicador" id="indicador-conexion">
+            <span class="dot"></span>
+            <span id="texto-conexion">Conectado</span>
+        </div>
+    </header>
+
+    <!-- Contenido principal -->
+    <main class="contenido">
+        
+        <!-- VISTA: LOGIN -->
+        <div class="vista-login" id="vista-login">
+            <h2>Inventario Ciego</h2>
+            <p class="subtitulo">Inicia sesión para continuar</p>
+            
+            <div class="alerta" id="alerta-login"></div>
+            
+            <div class="campo">
+                <label for="usuario">Usuario</label>
+                <input type="text" id="usuario" autocomplete="username" autocapitalize="off" placeholder="ej. inv_g1_a">
+            </div>
+            
+            <div class="campo">
+                <label for="password">Contraseña</label>
+                <input type="password" id="password" autocomplete="current-password" placeholder="••••••••">
+            </div>
+            
+            <button class="btn-principal" id="btn-login">Iniciar Sesión</button>
+        </div>
+        
+        <!-- VISTA: DASHBOARD POST-LOGIN -->
+        <div class="vista-dashboard" id="vista-dashboard">
+            
+            <div class="tarjeta-usuario">
+                <h3 id="dash-nombre">Usuario</h3>
+                <div class="rol" id="dash-rol">ROL</div>
+                <div class="info-fila" id="dash-expira">Sesión expira: -</div>
+                <div class="info-fila" id="dash-token">Token: -</div>
+            </div>
+            
+            <div class="alerta info visible" id="alerta-dashboard">
+                ✅ Conexión establecida con el servidor de Fogueira. Próximas funciones: descarga de catálogo, captura de inventario, sincronización offline.
+            </div>
+            
+            <div class="acciones">
+                <button class="btn-secundario" id="btn-validar">Validar Sesión</button>
+                <button class="btn-secundario" id="btn-ping">Probar Ping al Servidor</button>
+            </div>
+            
+            <button class="btn-cerrar" id="btn-logout">Cerrar Sesión</button>
+        </div>
+        
+    </main>
+    
+    <div class="versionado">PWA v0.2 — TODA Contraloría</div>
+
+<script>
+    // ===================================================
+    // CONFIGURACIÓN
+    // ===================================================
+    const API_URL = 'https://script.google.com/macros/s/AKfycbz77caU1oxYtguWK5FlFmXZ-3MDeRohMw66hkcCTPH8elcPtiKG1CZtoV6Dyr45DOe_/exec';
+    const STORAGE_KEY = 'fogueira_pwa_sesion';
+    
+    // ===================================================
+    // ESTADO
+    // ===================================================
+    let sesionActual = null;
+    
+    // ===================================================
+    // DETECCIÓN DE CONEXIÓN
+    // ===================================================
+    function actualizarConexion() {
+        const indicador = document.getElementById('indicador-conexion');
+        const texto = document.getElementById('texto-conexion');
+        if (navigator.onLine) {
+            indicador.classList.remove('offline');
+            texto.textContent = 'En línea';
+        } else {
+            indicador.classList.add('offline');
+            texto.textContent = 'Sin conexión';
+        }
+    }
+    actualizarConexion();
+    window.addEventListener('online', actualizarConexion);
+    window.addEventListener('offline', actualizarConexion);
+    
+    // ===================================================
+    // SERVICE WORKER
+    // ===================================================
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js')
+            .then(() => console.log('SW registrado'))
+            .catch(err => console.log('SW error:', err));
+    }
+    
+    // ===================================================
+    // LLAMADA AL API
+    // ===================================================
+    async function llamarApi(accion, params = {}) {
+        const body = { accion, params };
+        
+        const response = await fetch(API_URL + '?api=v1', {
+            method: 'POST',
+            // text/plain para evitar CORS preflight con Apps Script
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(body),
+            redirect: 'follow'
+        });
+        
+        if (!response.ok) {
+            throw new Error('HTTP ' + response.status);
+        }
+        
+        return await response.json();
+    }
+    
+    // ===================================================
+    // ALERTAS
+    // ===================================================
+    function mostrarAlerta(elementoId, mensaje, tipo = 'error') {
+        const el = document.getElementById(elementoId);
+        el.textContent = mensaje;
+        el.className = 'alerta ' + tipo + ' visible';
+    }
+    function ocultarAlerta(elementoId) {
+        document.getElementById(elementoId).classList.remove('visible');
+    }
+    
+    // ===================================================
+    // LOGIN
+    // ===================================================
+    document.getElementById('btn-login').addEventListener('click', async () => {
+        const usuario = document.getElementById('usuario').value.trim();
+        const password = document.getElementById('password').value;
+        
+        if (!usuario || !password) {
+            mostrarAlerta('alerta-login', 'Ingresa usuario y contraseña', 'error');
+            return;
+        }
+        
+        if (!navigator.onLine) {
+            mostrarAlerta('alerta-login', 'Sin conexión. El login requiere internet la primera vez.', 'error');
+            return;
+        }
+        
+        const btn = document.getElementById('btn-login');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span>Validando...';
+        ocultarAlerta('alerta-login');
+        
+        try {
+            const respuesta = await llamarApi('login', { usuario, password });
+            
+            if (respuesta.ok) {
+                sesionActual = respuesta.data;
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(sesionActual));
+                mostrarDashboard();
             } else {
-                el.textContent = '🔴 Sin conexión (modo offline)';
-                el.style.color = '#fbbf24';
+                mostrarAlerta('alerta-login', respuesta.mensaje || 'Error al iniciar sesión', 'error');
+            }
+        } catch (error) {
+            mostrarAlerta('alerta-login', 'Error de red: ' + error.message, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Iniciar Sesión';
+        }
+    });
+    
+    // Submit con Enter
+    document.getElementById('password').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') document.getElementById('btn-login').click();
+    });
+    
+    // ===================================================
+    // MOSTRAR DASHBOARD
+    // ===================================================
+    function mostrarDashboard() {
+        document.getElementById('vista-login').style.display = 'none';
+        document.getElementById('vista-dashboard').classList.add('visible');
+        
+        document.getElementById('dash-nombre').textContent = sesionActual.nombre;
+        document.getElementById('dash-rol').textContent = sesionActual.rol;
+        document.getElementById('dash-expira').textContent = 
+            'Sesión expira: ' + new Date(sesionActual.expira).toLocaleString('es-MX');
+        document.getElementById('dash-token').textContent = 
+            'Token: ' + sesionActual.token.substring(0, 12) + '...';
+    }
+    
+    function mostrarLogin() {
+        document.getElementById('vista-login').style.display = 'flex';
+        document.getElementById('vista-dashboard').classList.remove('visible');
+        document.getElementById('usuario').value = '';
+        document.getElementById('password').value = '';
+        ocultarAlerta('alerta-login');
+    }
+    
+    // ===================================================
+    // VALIDAR SESIÓN AL CARGAR
+    // ===================================================
+    async function validarSesionExistente() {
+        const guardado = localStorage.getItem(STORAGE_KEY);
+        if (!guardado) return;
+        
+        try {
+            sesionActual = JSON.parse(guardado);
+            
+            // Validar contra el servidor solo si hay conexión
+            if (navigator.onLine) {
+                const respuesta = await llamarApi('validarSesion', { token: sesionActual.token });
+                if (respuesta.ok) {
+                    sesionActual.expira = respuesta.data.expira;
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(sesionActual));
+                    mostrarDashboard();
+                } else {
+                    localStorage.removeItem(STORAGE_KEY);
+                    sesionActual = null;
+                }
+            } else {
+                // Sin conexión: confiar en lo guardado
+                mostrarDashboard();
+            }
+        } catch (e) {
+            console.log('Error validando sesión:', e);
+            localStorage.removeItem(STORAGE_KEY);
+        }
+    }
+    
+    // ===================================================
+    // BOTONES DEL DASHBOARD
+    // ===================================================
+    document.getElementById('btn-validar').addEventListener('click', async () => {
+        if (!sesionActual) return;
+        try {
+            const r = await llamarApi('validarSesion', { token: sesionActual.token });
+            if (r.ok) {
+                alert('✅ Sesión válida.\nExpira: ' + new Date(r.data.expira).toLocaleString('es-MX'));
+                sesionActual.expira = r.data.expira;
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(sesionActual));
+                document.getElementById('dash-expira').textContent = 
+                    'Sesión expira: ' + new Date(sesionActual.expira).toLocaleString('es-MX');
+            } else {
+                alert('❌ ' + r.mensaje);
+            }
+        } catch (e) {
+            alert('Error: ' + e.message);
+        }
+    });
+    
+    document.getElementById('btn-ping').addEventListener('click', async () => {
+        try {
+            const r = await llamarApi('ping');
+            alert('✅ Servidor respondió:\n' + JSON.stringify(r.data, null, 2));
+        } catch (e) {
+            alert('Error: ' + e.message);
+        }
+    });
+    
+    document.getElementById('btn-logout').addEventListener('click', async () => {
+        if (!confirm('¿Cerrar sesión?')) return;
+        if (sesionActual && navigator.onLine) {
+            try {
+                await llamarApi('cerrarSesion', { token: sesionActual.token });
+            } catch (e) {
+                console.log('Error cerrando sesión en servidor:', e);
             }
         }
-        updateStatus();
-        window.addEventListener('online', updateStatus);
-        window.addEventListener('offline', updateStatus);
+        localStorage.removeItem(STORAGE_KEY);
+        sesionActual = null;
+        mostrarLogin();
+    });
+    
+    // ===================================================
+    // INICIO
+    // ===================================================
+    validarSesionExistente();
+</script>
 
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js')
-                .then(() => console.log('SW registrado'))
-                .catch(err => console.log('SW error:', err));
-        }
-    </script>
 </body>
 </html>
