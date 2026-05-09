@@ -25,8 +25,12 @@ let filtroActual = 'TODOS';      // TODOS | PENDIENTES | CAPTURADOS | PRIORITARI
 function $(id) { return document.getElementById(id); }
 function $$(sel) { return document.querySelectorAll(sel); }
 
-function show(id) { $(id).style.display = 'flex'; }
-function hide(id) { $(id).style.display = 'none'; }
+function show(id) {
+    const el = $(id); if (el) el.style.setProperty('display', 'flex', 'important');
+}
+function hide(id) {
+    const el = $(id); if (el) el.style.setProperty('display', 'none', 'important');
+}
 
 function mostrarVista(vistaId) {
     ['vista-login', 'vista-sesiones', 'vista-captura'].forEach(v => hide(v));
@@ -762,7 +766,10 @@ async function inicio() {
 }
 
 // Eventos al cargar
-document.addEventListener('DOMContentLoaded', () => {
+function setupApp() {
+    if (window.__fgInit) return;
+    window.__fgInit = true;
+    
     // Login
     $('btn-login').addEventListener('click', hacerLogin);
     $('password').addEventListener('keydown', e => {
@@ -790,7 +797,13 @@ document.addEventListener('DOMContentLoaded', () => {
     $('fcat-guardar').addEventListener('click', guardarFCat);
     
     inicio();
-});
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupApp);
+} else {
+    setupApp();
+}
 
 // Hacer accesibles las funciones inline (onclick="...")
 window.abrirCaptura = abrirCaptura;
