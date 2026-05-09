@@ -330,40 +330,41 @@ function renderProductos() {
         return;
     }
     
-    cont.innerHTML = lista.map(p => {
-        const c = conteosLocales[p.clave];
-        const capturado = !!c;
-        const sincronizado = c ? c.sincronizado : false;
-        const claseFila = 'producto-fila' +
-            (p.prioritario ? ' prioritario' : '') +
-            (capturado ? ' capturado' : '') +
-            (capturado && !sincronizado ? ' pendiente-sync' : '') +
-            (p.es_fuera_catalogo ? ' fcat' : '');
-        
-        const badgePri = p.prioritario ? '<span class="badge-pri">PRIO</span>' : '';
-        const badgeFcat = p.es_fuera_catalogo ? '<span class="badge-fcat">FCAT</span>' : '';
-        const badgeSync = capturado ?
-            (sincronizado ? '<span class="badge-ok">✓</span>' : '<span class="badge-pendiente">⏳</span>') : '';
-        
-        const cantidad = c ? c.cantidad : '';
-        
-        return `
-            return `
-    <div class="${claseFila}" data-clave="${p.clave}">
-        <div class="prod-info" onclick="abrirCaptura('${p.clave}')">
-            <div class="prod-desc">${badgePri}${badgeFcat}${escapeHtml(p.descripcion)}${p.unidad ? ' · ' + escapeHtml(p.unidad) : ''}</div>
-            <div class="prod-meta">
-                <span class="prod-clave">${p.clave}</span>
-                ${p.grupo_producto ? `<span class="prod-grupo">${escapeHtml(p.grupo_producto)}</span>` : ''}
-                ${badgeSync}
+cont.innerHTML = lista.map(p => {
+    const c = conteosLocales[p.clave];
+    const capturado = !!c;
+    const sincronizado = c ? c.sincronizado : false;
+    const claseFila = 'producto-fila' +
+        (p.prioritario ? ' prioritario' : '') +
+        (capturado ? ' capturado' : '') +
+        (capturado && !sincronizado ? ' pendiente-sync' : '') +
+        (p.es_fuera_catalogo ? ' fcat' : '');
+    
+    const badgePri = p.prioritario ? '<span class="badge-pri">PRIO</span>' : '';
+    const badgeFcat = p.es_fuera_catalogo ? '<span class="badge-fcat">FCAT</span>' : '';
+    const badgeSync = capturado ?
+        (sincronizado ? '<span class="badge-ok">✓</span>' : '<span class="badge-pendiente">⏳</span>') : '';
+    const badgeGrupo = p.grupo_producto ? '<span class="prod-grupo">' + escapeHtml(p.grupo_producto) + '</span>' : '';
+    const unidadInline = p.unidad ? ' · ' + escapeHtml(p.unidad) : '';
+    
+    const cantidad = c ? c.cantidad : '';
+    
+    return `
+        <div class="${claseFila}" data-clave="${p.clave}">
+            <div class="prod-info" onclick="abrirCaptura('${p.clave}')">
+                <div class="prod-desc">${badgePri}${badgeFcat}${escapeHtml(p.descripcion)}${unidadInline}</div>
+                <div class="prod-meta">
+                    <span class="prod-clave">${p.clave}</span>
+                    ${badgeGrupo}
+                    ${badgeSync}
+                </div>
+            </div>
+            <div class="prod-cantidad" onclick="abrirCaptura('${p.clave}')">
+                ${cantidad !== '' ? cantidad : '<span class="placeholder">—</span>'}
             </div>
         </div>
-        <div class="prod-cantidad" onclick="abrirCaptura('${p.clave}')">
-            ${cantidad !== '' ? cantidad : '<span class="placeholder">—</span>'}
-        </div>
-    </div>
-`;
-    }).join('');
+    `;
+}).join('');
     
     actualizarContadores();
 }
