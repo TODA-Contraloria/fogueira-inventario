@@ -12,7 +12,6 @@
     <title>Fogueira Inventario</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        
         body {
             background: #000;
             color: #C9A961;
@@ -22,42 +21,55 @@
             display: flex;
             flex-direction: column;
         }
-        
-        /* === HEADER === */
         .app-header {
             background: #0a0a0a;
             border-bottom: 1px solid #C9A961;
-            padding: 16px 20px;
+            padding: 14px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
         .app-header h1 {
-            font-size: 20px;
+            font-size: 18px;
             letter-spacing: 2px;
-            font-weight: bold;
+        }
+        .header-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 11px;
         }
         .conexion-indicador {
             display: flex;
             align-items: center;
-            gap: 6px;
-            font-size: 12px;
+            gap: 5px;
             opacity: 0.8;
         }
         .conexion-indicador .dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
+            width: 8px; height: 8px; border-radius: 50%;
             background: #4ade80;
         }
         .conexion-indicador.offline .dot { background: #fbbf24; }
-        
-        /* === CONTENIDO PRINCIPAL === */
+        .btn-salir {
+            background: transparent;
+            color: #ef4444;
+            border: 1px solid #ef4444;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+        }
         .contenido {
             flex: 1;
-            padding: 24px 20px;
+            padding: 20px;
             display: flex;
             flex-direction: column;
+            max-width: 600px;
+            width: 100%;
+            margin: 0 auto;
         }
         
         /* === LOGIN === */
@@ -69,12 +81,12 @@
             flex-direction: column;
             justify-content: center;
             flex: 1;
+            padding-top: 40px;
         }
         .vista-login h2 {
             text-align: center;
             margin-bottom: 8px;
-            font-size: 24px;
-            letter-spacing: 1px;
+            font-size: 22px;
         }
         .vista-login .subtitulo {
             text-align: center;
@@ -90,7 +102,6 @@
             font-size: 13px;
             margin-bottom: 6px;
             opacity: 0.8;
-            letter-spacing: 0.5px;
         }
         .campo input {
             width: 100%;
@@ -102,11 +113,8 @@
             font-size: 16px;
             font-family: inherit;
             outline: none;
-            transition: border-color 0.2s;
         }
-        .campo input:focus {
-            border-color: #C9A961;
-        }
+        .campo input:focus { border-color: #C9A961; }
         .btn-principal {
             width: 100%;
             padding: 16px;
@@ -119,13 +127,10 @@
             letter-spacing: 1px;
             cursor: pointer;
             margin-top: 8px;
-            transition: opacity 0.2s;
+            font-family: inherit;
         }
-        .btn-principal:active { opacity: 0.8; }
-        .btn-principal:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
+        .btn-principal:active { opacity: 0.85; }
+        .btn-principal:disabled { opacity: 0.4; cursor: not-allowed; }
         
         .alerta {
             padding: 12px 16px;
@@ -151,70 +156,129 @@
         }
         .alerta.visible { display: block; }
         
-        /* === DASHBOARD POST-LOGIN === */
-        .vista-dashboard {
+        /* === SESIONES === */
+        .vista-sesiones {
             display: none;
-            flex: 1;
             flex-direction: column;
         }
-        .vista-dashboard.visible { display: flex; }
+        .vista-sesiones.visible { display: flex; }
         
-        .tarjeta-usuario {
+        .info-usuario {
             background: #1a1a1a;
-            border: 1px solid #C9A961;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
+            border: 1px solid #333;
+            border-radius: 10px;
+            padding: 14px 16px;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        .tarjeta-usuario h3 {
-            font-size: 18px;
-            margin-bottom: 4px;
-        }
-        .tarjeta-usuario .rol {
+        .info-usuario .nombre { font-size: 14px; font-weight: bold; }
+        .info-usuario .rol { font-size: 11px; opacity: 0.6; letter-spacing: 1px; }
+        .grupo-badge {
+            background: #C9A961;
+            color: #000;
+            padding: 4px 12px;
+            border-radius: 20px;
             font-size: 12px;
-            opacity: 0.7;
-            letter-spacing: 1px;
-            margin-bottom: 12px;
-        }
-        .tarjeta-usuario .info-fila {
-            font-size: 13px;
-            opacity: 0.6;
-            margin-top: 4px;
+            font-weight: bold;
         }
         
-        .acciones {
+        .seccion-titulo {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.6;
+            margin: 16px 0 10px 0;
+        }
+        
+        .lista-sesiones {
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            margin-top: 16px;
+            gap: 10px;
         }
-        .btn-secundario {
-            width: 100%;
+        .tarjeta-sesion {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 10px;
             padding: 14px;
-            background: transparent;
-            color: #C9A961;
-            border: 1px solid #C9A961;
-            border-radius: 8px;
-            font-size: 15px;
-            font-family: inherit;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: border-color 0.15s;
         }
-        .btn-secundario:active {
-            background: rgba(201, 169, 97, 0.1);
+        .tarjeta-sesion:active {
+            border-color: #C9A961;
+        }
+        .tarjeta-sesion .top-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .tarjeta-sesion .folio {
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .tarjeta-sesion .estatus {
+            font-size: 10px;
+            padding: 3px 8px;
+            border-radius: 12px;
+            letter-spacing: 0.5px;
+        }
+        .estatus.ABIERTA { background: rgba(96, 165, 250, 0.2); color: #93c5fd; }
+        .estatus.EN_PROGRESO { background: rgba(251, 191, 36, 0.2); color: #fcd34d; }
+        .estatus.EN_CONCILIACION { background: rgba(168, 85, 247, 0.2); color: #c4b5fd; }
+        .estatus.CERRADA { background: rgba(74, 222, 128, 0.2); color: #86efac; }
+        .estatus.CANCELADA { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
+        
+        .tarjeta-sesion .almacen {
+            font-size: 16px;
+            margin-bottom: 6px;
+        }
+        .tarjeta-sesion .meta {
+            font-size: 12px;
+            opacity: 0.6;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .tarjeta-sesion .grupos {
+            margin-top: 8px;
+            display: flex;
+            gap: 8px;
+            font-size: 11px;
+        }
+        .grupo-tag {
+            padding: 3px 8px;
+            border-radius: 6px;
+            border: 1px solid #333;
+        }
+        .grupo-tag.activo { border-color: #C9A961; color: #C9A961; }
+        .grupo-tag.libre { color: #4ade80; border-color: #4ade80; }
+        .grupo-tag.tomado { color: #ef4444; border-color: #ef4444; }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            opacity: 0.6;
         }
         
-        .btn-cerrar {
-            margin-top: auto;
-            width: 100%;
-            padding: 14px;
-            background: transparent;
-            color: #ef4444;
-            border: 1px solid #ef4444;
+        /* === PRODUCTOS (placeholder etapa V) === */
+        .vista-productos {
+            display: none;
+        }
+        .vista-productos.visible { display: flex; flex-direction: column; }
+        
+        .barra-volver {
+            background: #1a1a1a;
+            border: 1px solid #333;
             border-radius: 8px;
-            font-size: 15px;
-            font-family: inherit;
+            padding: 12px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
             cursor: pointer;
+            font-size: 14px;
         }
         
         /* === LOADING === */
@@ -229,9 +293,15 @@
             margin-right: 8px;
             vertical-align: middle;
         }
-        @keyframes girar {
-            to { transform: rotate(360deg); }
+        .spinner-grande {
+            width: 32px;
+            height: 32px;
+            border: 3px solid rgba(201,169,97,0.2);
+            border-top-color: #C9A961;
+            margin: 30px auto;
+            display: block;
         }
+        @keyframes girar { to { transform: rotate(360deg); } }
         
         .versionado {
             text-align: center;
@@ -243,283 +313,362 @@
 </head>
 <body>
 
-    <!-- Header -->
     <header class="app-header">
         <h1>FOGUEIRA</h1>
-        <div class="conexion-indicador" id="indicador-conexion">
-            <span class="dot"></span>
-            <span id="texto-conexion">Conectado</span>
+        <div class="header-info">
+            <div class="conexion-indicador" id="indicador-conexion">
+                <span class="dot"></span>
+                <span id="texto-conexion">En línea</span>
+            </div>
+            <button class="btn-salir" id="btn-logout-header" style="display:none">Salir</button>
         </div>
     </header>
 
-    <!-- Contenido principal -->
     <main class="contenido">
         
         <!-- VISTA: LOGIN -->
         <div class="vista-login" id="vista-login">
-            <h2>Inventario Ciego</h2>
+            <h2>Inventario Fogueira</h2>
             <p class="subtitulo">Inicia sesión para continuar</p>
-            
             <div class="alerta" id="alerta-login"></div>
-            
             <div class="campo">
                 <label for="usuario">Usuario</label>
                 <input type="text" id="usuario" autocomplete="username" autocapitalize="off" placeholder="ej. inv_g1_a">
             </div>
-            
             <div class="campo">
                 <label for="password">Contraseña</label>
                 <input type="password" id="password" autocomplete="current-password" placeholder="••••••••">
             </div>
-            
             <button class="btn-principal" id="btn-login">Iniciar Sesión</button>
         </div>
         
-        <!-- VISTA: DASHBOARD POST-LOGIN -->
-        <div class="vista-dashboard" id="vista-dashboard">
-            
-            <div class="tarjeta-usuario">
-                <h3 id="dash-nombre">Usuario</h3>
-                <div class="rol" id="dash-rol">ROL</div>
-                <div class="info-fila" id="dash-expira">Sesión expira: -</div>
-                <div class="info-fila" id="dash-token">Token: -</div>
+        <!-- VISTA: SESIONES -->
+        <div class="vista-sesiones" id="vista-sesiones">
+            <div class="info-usuario">
+                <div>
+                    <div class="nombre" id="us-nombre">-</div>
+                    <div class="rol" id="us-rol">-</div>
+                </div>
+                <div class="grupo-badge" id="us-grupo">-</div>
             </div>
             
-            <div class="alerta info visible" id="alerta-dashboard">
-                ✅ Conexión establecida con el servidor de Fogueira. Próximas funciones: descarga de catálogo, captura de inventario, sincronización offline.
-            </div>
+            <div class="alerta" id="alerta-sesiones"></div>
             
-            <div class="acciones">
-                <button class="btn-secundario" id="btn-validar">Validar Sesión</button>
-                <button class="btn-secundario" id="btn-ping">Probar Ping al Servidor</button>
+            <div class="seccion-titulo" id="titulo-sesiones">Sesiones disponibles</div>
+            <div class="lista-sesiones" id="lista-sesiones"></div>
+        </div>
+        
+        <!-- VISTA: PRODUCTOS (placeholder, etapa V) -->
+        <div class="vista-productos" id="vista-productos">
+            <div class="barra-volver" id="btn-volver">← Volver a sesiones</div>
+            <div class="alerta info visible">
+                ✅ Sesión asignada correctamente. La pantalla de captura de productos llega en la siguiente actualización.
             </div>
-            
-            <button class="btn-cerrar" id="btn-logout">Cerrar Sesión</button>
+            <div id="info-sesion-actual"></div>
         </div>
         
     </main>
     
-    <div class="versionado">PWA v0.2 — TODA Contraloría</div>
+    <div class="versionado">PWA v0.3 — TODA Contraloría</div>
 
 <script>
-    // ===================================================
-    // CONFIGURACIÓN
-    // ===================================================
-    const API_URL = 'https://script.google.com/macros/s/AKfycbz77caU1oxYtguWK5FlFmXZ-3MDeRohMw66hkcCTPH8elcPtiKG1CZtoV6Dyr45DOe_/exec';
-    const STORAGE_KEY = 'fogueira_pwa_sesion';
+// ===================================================
+// CONFIGURACIÓN
+// ===================================================
+const API_URL = 'https://script.google.com/macros/s/AKfycbz77caU1oxYtguWK5FlFmXZ-3MDeRohMw66hkcCTPH8elcPtiKG1CZtoV6Dyr45DOe_/exec';
+const STORAGE_KEY = 'fogueira_pwa_sesion';
+
+// ===================================================
+// ESTADO
+// ===================================================
+let sesionActual = null;
+let folioSesionActiva = null;
+
+// ===================================================
+// HELPERS
+// ===================================================
+function $(id) { return document.getElementById(id); }
+
+function actualizarConexion() {
+    const indicador = $('indicador-conexion');
+    const texto = $('texto-conexion');
+    if (navigator.onLine) {
+        indicador.classList.remove('offline');
+        texto.textContent = 'En línea';
+    } else {
+        indicador.classList.add('offline');
+        texto.textContent = 'Sin conexión';
+    }
+}
+actualizarConexion();
+window.addEventListener('online', actualizarConexion);
+window.addEventListener('offline', actualizarConexion);
+
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+
+async function llamarApi(accion, params = {}) {
+    const response = await fetch(API_URL + '?api=v1', {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ accion, params }),
+        redirect: 'follow'
+    });
+    if (!response.ok) throw new Error('HTTP ' + response.status);
+    return await response.json();
+}
+
+function mostrarAlerta(elementoId, mensaje, tipo = 'error') {
+    const el = $(elementoId);
+    el.textContent = mensaje;
+    el.className = 'alerta ' + tipo + ' visible';
+}
+function ocultarAlerta(elementoId) {
+    $(elementoId).classList.remove('visible');
+}
+
+function obtenerGrupoDelRol(rol) {
+    if (rol === 'CONTEO_G1') return 'G1';
+    if (rol === 'CONTEO_G2') return 'G2';
+    if (rol === 'AUDITOR_INV' || rol === 'CONTRALOR') return 'AUDITOR';
+    return null;
+}
+
+function formatearFecha(timestamp) {
+    if (!timestamp) return '-';
+    return new Date(timestamp).toLocaleString('es-MX', {
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+    });
+}
+
+// ===================================================
+// LOGIN
+// ===================================================
+$('btn-login').addEventListener('click', async () => {
+    const usuario = $('usuario').value.trim();
+    const password = $('password').value;
     
-    // ===================================================
-    // ESTADO
-    // ===================================================
-    let sesionActual = null;
+    if (!usuario || !password) {
+        mostrarAlerta('alerta-login', 'Ingresa usuario y contraseña', 'error');
+        return;
+    }
+    if (!navigator.onLine) {
+        mostrarAlerta('alerta-login', 'Sin conexión. El login requiere internet.', 'error');
+        return;
+    }
     
-    // ===================================================
-    // DETECCIÓN DE CONEXIÓN
-    // ===================================================
-    function actualizarConexion() {
-        const indicador = document.getElementById('indicador-conexion');
-        const texto = document.getElementById('texto-conexion');
-        if (navigator.onLine) {
-            indicador.classList.remove('offline');
-            texto.textContent = 'En línea';
+    const btn = $('btn-login');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Validando...';
+    ocultarAlerta('alerta-login');
+    
+    try {
+        const r = await llamarApi('login', { usuario, password });
+        if (r.ok) {
+            sesionActual = r.data;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(sesionActual));
+            mostrarSesiones();
         } else {
-            indicador.classList.add('offline');
-            texto.textContent = 'Sin conexión';
+            mostrarAlerta('alerta-login', r.mensaje || r.error || 'Error', 'error');
         }
+    } catch (e) {
+        mostrarAlerta('alerta-login', 'Error de red: ' + e.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Iniciar Sesión';
     }
-    actualizarConexion();
-    window.addEventListener('online', actualizarConexion);
-    window.addEventListener('offline', actualizarConexion);
+});
+$('password').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') $('btn-login').click();
+});
+
+// ===================================================
+// VISTA: SESIONES
+// ===================================================
+async function mostrarSesiones() {
+    $('vista-login').style.display = 'none';
+    $('vista-productos').classList.remove('visible');
+    $('vista-sesiones').classList.add('visible');
+    $('btn-logout-header').style.display = 'inline-block';
     
-    // ===================================================
-    // SERVICE WORKER
-    // ===================================================
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js')
-            .then(() => console.log('SW registrado'))
-            .catch(err => console.log('SW error:', err));
-    }
+    const grupo = obtenerGrupoDelRol(sesionActual.rol);
+    $('us-nombre').textContent = sesionActual.nombre;
+    $('us-rol').textContent = sesionActual.rol;
+    $('us-grupo').textContent = grupo || sesionActual.rol;
     
-    // ===================================================
-    // LLAMADA AL API
-    // ===================================================
-    async function llamarApi(accion, params = {}) {
-        const body = { accion, params };
-        
-        const response = await fetch(API_URL + '?api=v1', {
-            method: 'POST',
-            // text/plain para evitar CORS preflight con Apps Script
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify(body),
-            redirect: 'follow'
+    await cargarSesiones();
+}
+
+async function cargarSesiones() {
+    const lista = $('lista-sesiones');
+    lista.innerHTML = '<div class="spinner spinner-grande"></div>';
+    ocultarAlerta('alerta-sesiones');
+    
+    try {
+        const r = await llamarApi('invsoft.listarSesiones', {
+            token: sesionActual.token,
+            filtros: {} // sin filtros, traemos todas y filtramos en cliente
         });
         
-        if (!response.ok) {
-            throw new Error('HTTP ' + response.status);
-        }
-        
-        return await response.json();
-    }
-    
-    // ===================================================
-    // ALERTAS
-    // ===================================================
-    function mostrarAlerta(elementoId, mensaje, tipo = 'error') {
-        const el = document.getElementById(elementoId);
-        el.textContent = mensaje;
-        el.className = 'alerta ' + tipo + ' visible';
-    }
-    function ocultarAlerta(elementoId) {
-        document.getElementById(elementoId).classList.remove('visible');
-    }
-    
-    // ===================================================
-    // LOGIN
-    // ===================================================
-    document.getElementById('btn-login').addEventListener('click', async () => {
-        const usuario = document.getElementById('usuario').value.trim();
-        const password = document.getElementById('password').value;
-        
-        if (!usuario || !password) {
-            mostrarAlerta('alerta-login', 'Ingresa usuario y contraseña', 'error');
+        if (!r.ok) {
+            mostrarAlerta('alerta-sesiones', r.mensaje || r.error || 'Error al cargar', 'error');
+            lista.innerHTML = '';
             return;
         }
         
-        if (!navigator.onLine) {
-            mostrarAlerta('alerta-login', 'Sin conexión. El login requiere internet la primera vez.', 'error');
+        // Filtrar solo sesiones activas (ABIERTA o EN_PROGRESO)
+        const activas = (r.sesiones || []).filter(s => 
+            s.estatus === 'ABIERTA' || s.estatus === 'EN_PROGRESO'
+        );
+        
+        if (activas.length === 0) {
+            lista.innerHTML = '<div class="empty-state">No hay sesiones activas para contar.</div>';
             return;
         }
         
-        const btn = document.getElementById('btn-login');
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner"></span>Validando...';
-        ocultarAlerta('alerta-login');
+        const grupo = obtenerGrupoDelRol(sesionActual.rol);
+        lista.innerHTML = activas.map(s => renderSesion(s, grupo)).join('');
         
-        try {
-            const respuesta = await llamarApi('login', { usuario, password });
-            
-            if (respuesta.ok) {
-                sesionActual = respuesta.data;
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(sesionActual));
-                mostrarDashboard();
-            } else {
-                mostrarAlerta('alerta-login', respuesta.mensaje || 'Error al iniciar sesión', 'error');
-            }
-        } catch (error) {
-            mostrarAlerta('alerta-login', 'Error de red: ' + error.message, 'error');
-        } finally {
-            btn.disabled = false;
-            btn.textContent = 'Iniciar Sesión';
+        // Listeners
+        document.querySelectorAll('.tarjeta-sesion').forEach(t => {
+            t.addEventListener('click', () => entrarASesion(t.dataset.folio));
+        });
+        
+    } catch (e) {
+        mostrarAlerta('alerta-sesiones', 'Error: ' + e.message, 'error');
+        lista.innerHTML = '';
+    }
+}
+
+function renderSesion(s, miGrupo) {
+    const yoEstoyEn = (miGrupo === 'G1' && s.g1_usuario === sesionActual.usuario) ||
+                     (miGrupo === 'G2' && s.g2_usuario === sesionActual.usuario);
+    const miGrupoTag = miGrupo === 'G1' ? s.g1_usuario : (miGrupo === 'G2' ? s.g2_usuario : '');
+    
+    const g1Class = !s.g1_usuario ? 'libre' : (s.g1_usuario === sesionActual.usuario ? 'activo' : 'tomado');
+    const g2Class = !s.g2_usuario ? 'libre' : (s.g2_usuario === sesionActual.usuario ? 'activo' : 'tomado');
+    
+    return `
+        <div class="tarjeta-sesion" data-folio="${s.folio}">
+            <div class="top-row">
+                <span class="folio">${s.folio}</span>
+                <span class="estatus ${s.estatus}">${s.estatus}</span>
+            </div>
+            <div class="almacen">📍 ${s.almacen_nombre}</div>
+            <div class="meta">
+                <span>${s.total_productos} productos</span>
+                <span>·</span>
+                <span>Tipo: ${s.tipo_sesion}</span>
+            </div>
+            <div class="grupos">
+                <span class="grupo-tag ${g1Class}">G1: ${s.g1_usuario || 'libre'}</span>
+                <span class="grupo-tag ${g2Class}">G2: ${s.g2_usuario || 'libre'}</span>
+            </div>
+        </div>
+    `;
+}
+
+// ===================================================
+// ENTRAR A SESIÓN (asignar grupo)
+// ===================================================
+async function entrarASesion(folio) {
+    const grupo = obtenerGrupoDelRol(sesionActual.rol);
+    
+    if (!grupo || grupo === 'AUDITOR') {
+        alert('Tu rol (' + sesionActual.rol + ') no captura inventario. Solo G1/G2 pueden contar.');
+        return;
+    }
+    
+    if (!confirm(`¿Entrar a contar la sesión ${folio} como ${grupo}?`)) return;
+    
+    try {
+        const r = await llamarApi('invsoft.asignarGrupo', {
+            token: sesionActual.token,
+            folio: folio,
+            grupo: grupo
+        });
+        
+        if (!r.ok) {
+            alert('No se pudo entrar: ' + (r.mensaje || r.error));
+            return;
         }
-    });
-    
-    // Submit con Enter
-    document.getElementById('password').addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') document.getElementById('btn-login').click();
-    });
-    
-    // ===================================================
-    // MOSTRAR DASHBOARD
-    // ===================================================
-    function mostrarDashboard() {
-        document.getElementById('vista-login').style.display = 'none';
-        document.getElementById('vista-dashboard').classList.add('visible');
         
-        document.getElementById('dash-nombre').textContent = sesionActual.nombre;
-        document.getElementById('dash-rol').textContent = sesionActual.rol;
-        document.getElementById('dash-expira').textContent = 
-            'Sesión expira: ' + new Date(sesionActual.expira).toLocaleString('es-MX');
-        document.getElementById('dash-token').textContent = 
-            'Token: ' + sesionActual.token.substring(0, 12) + '...';
-    }
-    
-    function mostrarLogin() {
-        document.getElementById('vista-login').style.display = 'flex';
-        document.getElementById('vista-dashboard').classList.remove('visible');
-        document.getElementById('usuario').value = '';
-        document.getElementById('password').value = '';
-        ocultarAlerta('alerta-login');
-    }
-    
-    // ===================================================
-    // VALIDAR SESIÓN AL CARGAR
-    // ===================================================
-    async function validarSesionExistente() {
-        const guardado = localStorage.getItem(STORAGE_KEY);
-        if (!guardado) return;
+        folioSesionActiva = folio;
+        mostrarVistaProductos(folio);
         
-        try {
-            sesionActual = JSON.parse(guardado);
-            
-            // Validar contra el servidor solo si hay conexión
-            if (navigator.onLine) {
-                const respuesta = await llamarApi('validarSesion', { token: sesionActual.token });
-                if (respuesta.ok) {
-                    sesionActual.expira = respuesta.data.expira;
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify(sesionActual));
-                    mostrarDashboard();
-                } else {
-                    localStorage.removeItem(STORAGE_KEY);
-                    sesionActual = null;
-                }
-            } else {
-                // Sin conexión: confiar en lo guardado
-                mostrarDashboard();
-            }
-        } catch (e) {
-            console.log('Error validando sesión:', e);
-            localStorage.removeItem(STORAGE_KEY);
-        }
+    } catch (e) {
+        alert('Error: ' + e.message);
     }
+}
+
+function mostrarVistaProductos(folio) {
+    $('vista-sesiones').classList.remove('visible');
+    $('vista-productos').classList.add('visible');
+    $('info-sesion-actual').innerHTML = `
+        <div class="info-usuario">
+            <div>
+                <div class="nombre">Sesión: ${folio}</div>
+                <div class="rol">Asignado como ${obtenerGrupoDelRol(sesionActual.rol)}</div>
+            </div>
+        </div>
+    `;
+}
+
+$('btn-volver').addEventListener('click', () => {
+    folioSesionActiva = null;
+    mostrarSesiones();
+});
+
+// ===================================================
+// LOGOUT
+// ===================================================
+$('btn-logout-header').addEventListener('click', async () => {
+    if (!confirm('¿Cerrar sesión?')) return;
+    if (sesionActual && navigator.onLine) {
+        try { await llamarApi('cerrarSesion', { token: sesionActual.token }); } catch(e){}
+    }
+    localStorage.removeItem(STORAGE_KEY);
+    sesionActual = null;
+    folioSesionActiva = null;
     
-    // ===================================================
-    // BOTONES DEL DASHBOARD
-    // ===================================================
-    document.getElementById('btn-validar').addEventListener('click', async () => {
-        if (!sesionActual) return;
-        try {
+    $('vista-sesiones').classList.remove('visible');
+    $('vista-productos').classList.remove('visible');
+    $('vista-login').style.display = 'flex';
+    $('btn-logout-header').style.display = 'none';
+    $('usuario').value = '';
+    $('password').value = '';
+    ocultarAlerta('alerta-login');
+});
+
+// ===================================================
+// VALIDAR SESIÓN AL CARGAR
+// ===================================================
+async function validarSesionExistente() {
+    const guardado = localStorage.getItem(STORAGE_KEY);
+    if (!guardado) return;
+    try {
+        sesionActual = JSON.parse(guardado);
+        if (navigator.onLine) {
             const r = await llamarApi('validarSesion', { token: sesionActual.token });
             if (r.ok) {
-                alert('✅ Sesión válida.\nExpira: ' + new Date(r.data.expira).toLocaleString('es-MX'));
                 sesionActual.expira = r.data.expira;
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(sesionActual));
-                document.getElementById('dash-expira').textContent = 
-                    'Sesión expira: ' + new Date(sesionActual.expira).toLocaleString('es-MX');
+                mostrarSesiones();
             } else {
-                alert('❌ ' + r.mensaje);
+                localStorage.removeItem(STORAGE_KEY);
+                sesionActual = null;
             }
-        } catch (e) {
-            alert('Error: ' + e.message);
+        } else {
+            mostrarSesiones();
         }
-    });
-    
-    document.getElementById('btn-ping').addEventListener('click', async () => {
-        try {
-            const r = await llamarApi('ping');
-            alert('✅ Servidor respondió:\n' + JSON.stringify(r.data, null, 2));
-        } catch (e) {
-            alert('Error: ' + e.message);
-        }
-    });
-    
-    document.getElementById('btn-logout').addEventListener('click', async () => {
-        if (!confirm('¿Cerrar sesión?')) return;
-        if (sesionActual && navigator.onLine) {
-            try {
-                await llamarApi('cerrarSesion', { token: sesionActual.token });
-            } catch (e) {
-                console.log('Error cerrando sesión en servidor:', e);
-            }
-        }
+    } catch (e) {
         localStorage.removeItem(STORAGE_KEY);
-        sesionActual = null;
-        mostrarLogin();
-    });
-    
-    // ===================================================
-    // INICIO
-    // ===================================================
-    validarSesionExistente();
+    }
+}
+
+validarSesionExistente();
 </script>
 
 </body>
