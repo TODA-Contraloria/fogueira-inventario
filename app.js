@@ -25,7 +25,7 @@ let filtroActual = 'TODOS';      // TODOS | PENDIENTES | CAPTURADOS | PRIORITARI
 function $(id) { return document.getElementById(id); }
 function $$(sel) { return document.querySelectorAll(sel); }
 
-function show(id) { $(id).style.display = ''; }
+function show(id) { $(id).style.display = 'flex'; }
 function hide(id) { $(id).style.display = 'none'; }
 
 function mostrarVista(vistaId) {
