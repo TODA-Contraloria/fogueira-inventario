@@ -12,19 +12,21 @@
     <title>Fogueira Inventario</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body {
+        html, body {
             background: #000;
             color: #C9A961;
             font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif;
             min-height: 100vh;
             min-height: 100dvh;
-            display: flex;
-            flex-direction: column;
+            overscroll-behavior: none;
         }
+        body { display: flex; flex-direction: column; }
+
+        /* === HEADER === */
         .app-header {
             background: #0a0a0a;
             border-bottom: 1px solid #C9A961;
-            padding: 14px 20px;
+            padding: 12px 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -32,282 +34,285 @@
             top: 0;
             z-index: 100;
         }
-        .app-header h1 {
-            font-size: 18px;
-            letter-spacing: 2px;
-        }
-        .header-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-size: 11px;
-        }
+        .app-header h1 { font-size: 17px; letter-spacing: 2px; }
+        .header-info { display: flex; align-items: center; gap: 10px; }
         .conexion-indicador {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            opacity: 0.8;
+            display: flex; align-items: center; gap: 5px;
+            font-size: 11px; opacity: 0.85;
         }
         .conexion-indicador .dot {
-            width: 8px; height: 8px; border-radius: 50%;
-            background: #4ade80;
+            width: 8px; height: 8px; border-radius: 50%; background: #4ade80;
         }
         .conexion-indicador.offline .dot { background: #fbbf24; }
         .btn-salir {
-            background: transparent;
-            color: #ef4444;
+            background: transparent; color: #ef4444;
             border: 1px solid #ef4444;
-            padding: 4px 10px;
-            border-radius: 4px;
-            font-size: 11px;
-            cursor: pointer;
+            padding: 4px 10px; border-radius: 4px; font-size: 11px;
+            cursor: pointer; font-family: inherit;
         }
+
         .contenido {
-            flex: 1;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            max-width: 600px;
-            width: 100%;
-            margin: 0 auto;
+            flex: 1; padding: 16px;
+            max-width: 700px; width: 100%; margin: 0 auto;
+            display: flex; flex-direction: column;
         }
-        
+
+        /* === ALERTAS === */
+        .alerta {
+            padding: 12px 14px; border-radius: 8px; font-size: 13px;
+            margin-bottom: 12px; display: none;
+        }
+        .alerta.error { background: rgba(239,68,68,.15); border: 1px solid #ef4444; color: #fca5a5; }
+        .alerta.exito { background: rgba(74,222,128,.15); border: 1px solid #4ade80; color: #86efac; }
+        .alerta.info  { background: rgba(201,169,97,.15); border: 1px solid #C9A961; color: #C9A961; }
+        .alerta.visible { display: block; }
+
         /* === LOGIN === */
-        .vista-login {
-            max-width: 400px;
-            width: 100%;
-            margin: 0 auto;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            flex: 1;
-            padding-top: 40px;
+        #vista-login {
+            max-width: 380px; width: 100%; margin: 0 auto;
+            display: flex; flex-direction: column; flex: 1; justify-content: center;
+            padding-top: 30px;
         }
-        .vista-login h2 {
-            text-align: center;
-            margin-bottom: 8px;
-            font-size: 22px;
-        }
-        .vista-login .subtitulo {
-            text-align: center;
-            opacity: 0.6;
-            margin-bottom: 32px;
-            font-size: 14px;
-        }
-        .campo {
-            margin-bottom: 16px;
-        }
+        #vista-login h2 { text-align: center; font-size: 22px; margin-bottom: 6px; }
+        #vista-login .subtitulo { text-align: center; opacity: 0.6; margin-bottom: 28px; font-size: 13px; }
+
+        .campo { margin-bottom: 14px; }
         .campo label {
-            display: block;
-            font-size: 13px;
-            margin-bottom: 6px;
-            opacity: 0.8;
+            display: block; font-size: 12px; margin-bottom: 5px; opacity: 0.8;
         }
-        .campo input {
-            width: 100%;
-            padding: 14px 16px;
-            background: #1a1a1a;
-            border: 1px solid #333;
-            border-radius: 8px;
-            color: #C9A961;
-            font-size: 16px;
-            font-family: inherit;
-            outline: none;
+        .campo input, .campo textarea {
+            width: 100%; padding: 13px 14px;
+            background: #1a1a1a; border: 1px solid #333; border-radius: 8px;
+            color: #C9A961; font-size: 16px; font-family: inherit; outline: none;
         }
-        .campo input:focus { border-color: #C9A961; }
+        .campo input:focus, .campo textarea:focus { border-color: #C9A961; }
+        .campo textarea { resize: vertical; min-height: 60px; }
+
         .btn-principal {
-            width: 100%;
-            padding: 16px;
-            background: #C9A961;
-            color: #000;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: bold;
-            letter-spacing: 1px;
-            cursor: pointer;
-            margin-top: 8px;
-            font-family: inherit;
+            width: 100%; padding: 15px; background: #C9A961; color: #000;
+            border: none; border-radius: 8px; font-size: 16px; font-weight: bold;
+            letter-spacing: 1px; cursor: pointer; font-family: inherit;
+            transition: opacity 0.15s;
         }
         .btn-principal:active { opacity: 0.85; }
         .btn-principal:disabled { opacity: 0.4; cursor: not-allowed; }
-        
-        .alerta {
-            padding: 12px 16px;
-            border-radius: 8px;
-            font-size: 14px;
-            margin-bottom: 16px;
-            display: none;
-        }
-        .alerta.error {
-            background: rgba(239, 68, 68, 0.15);
-            border: 1px solid #ef4444;
-            color: #fca5a5;
-        }
-        .alerta.exito {
-            background: rgba(74, 222, 128, 0.15);
-            border: 1px solid #4ade80;
-            color: #86efac;
-        }
-        .alerta.info {
-            background: rgba(201, 169, 97, 0.15);
-            border: 1px solid #C9A961;
-            color: #C9A961;
-        }
-        .alerta.visible { display: block; }
-        
+
         /* === SESIONES === */
-        .vista-sesiones {
-            display: none;
-            flex-direction: column;
-        }
-        .vista-sesiones.visible { display: flex; }
-        
+        #vista-sesiones { display: none; flex-direction: column; }
+
         .info-usuario {
-            background: #1a1a1a;
-            border: 1px solid #333;
-            border-radius: 10px;
-            padding: 14px 16px;
-            margin-bottom: 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            background: #1a1a1a; border: 1px solid #333; border-radius: 10px;
+            padding: 12px 14px; margin-bottom: 14px;
+            display: flex; justify-content: space-between; align-items: center;
         }
         .info-usuario .nombre { font-size: 14px; font-weight: bold; }
         .info-usuario .rol { font-size: 11px; opacity: 0.6; letter-spacing: 1px; }
         .grupo-badge {
-            background: #C9A961;
-            color: #000;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: bold;
+            background: #C9A961; color: #000;
+            padding: 4px 12px; border-radius: 20px;
+            font-size: 12px; font-weight: bold;
         }
-        
+
         .seccion-titulo {
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            opacity: 0.6;
-            margin: 16px 0 10px 0;
+            font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
+            opacity: 0.6; margin: 14px 0 8px 0;
         }
-        
-        .lista-sesiones {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
+
+        .lista-sesiones { display: flex; flex-direction: column; gap: 10px; }
         .tarjeta-sesion {
-            background: #1a1a1a;
-            border: 1px solid #333;
-            border-radius: 10px;
-            padding: 14px;
-            cursor: pointer;
-            transition: border-color 0.15s;
+            background: #1a1a1a; border: 1px solid #333; border-radius: 10px;
+            padding: 13px; cursor: pointer;
         }
-        .tarjeta-sesion:active {
-            border-color: #C9A961;
-        }
+        .tarjeta-sesion:active { border-color: #C9A961; }
         .tarjeta-sesion .top-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;
         }
-        .tarjeta-sesion .folio {
-            font-weight: bold;
-            font-size: 14px;
-        }
+        .tarjeta-sesion .folio { font-weight: bold; font-size: 13px; }
         .tarjeta-sesion .estatus {
-            font-size: 10px;
-            padding: 3px 8px;
-            border-radius: 12px;
-            letter-spacing: 0.5px;
+            font-size: 10px; padding: 3px 8px; border-radius: 12px; letter-spacing: 0.5px;
         }
-        .estatus.ABIERTA { background: rgba(96, 165, 250, 0.2); color: #93c5fd; }
-        .estatus.EN_PROGRESO { background: rgba(251, 191, 36, 0.2); color: #fcd34d; }
-        .estatus.EN_CONCILIACION { background: rgba(168, 85, 247, 0.2); color: #c4b5fd; }
-        .estatus.CERRADA { background: rgba(74, 222, 128, 0.2); color: #86efac; }
-        .estatus.CANCELADA { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
-        
-        .tarjeta-sesion .almacen {
-            font-size: 16px;
-            margin-bottom: 6px;
-        }
+        .estatus.ABIERTA { background: rgba(96,165,250,.2); color: #93c5fd; }
+        .estatus.EN_PROGRESO { background: rgba(251,191,36,.2); color: #fcd34d; }
+        .estatus.EN_CONCILIACION { background: rgba(168,85,247,.2); color: #c4b5fd; }
+        .estatus.CERRADA { background: rgba(74,222,128,.2); color: #86efac; }
+        .estatus.CANCELADA { background: rgba(239,68,68,.2); color: #fca5a5; }
+        .tarjeta-sesion .almacen { font-size: 15px; margin-bottom: 5px; }
         .tarjeta-sesion .meta {
-            font-size: 12px;
-            opacity: 0.6;
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
+            font-size: 11px; opacity: 0.6; display: flex; gap: 10px; flex-wrap: wrap;
         }
-        .tarjeta-sesion .grupos {
-            margin-top: 8px;
-            display: flex;
-            gap: 8px;
-            font-size: 11px;
-        }
+        .tarjeta-sesion .grupos { margin-top: 8px; display: flex; gap: 6px; font-size: 11px; flex-wrap: wrap; }
         .grupo-tag {
-            padding: 3px 8px;
-            border-radius: 6px;
-            border: 1px solid #333;
+            padding: 3px 8px; border-radius: 6px; border: 1px solid #333;
         }
         .grupo-tag.activo { border-color: #C9A961; color: #C9A961; }
-        .grupo-tag.libre { color: #4ade80; border-color: #4ade80; }
+        .grupo-tag.libre  { color: #4ade80; border-color: #4ade80; }
         .grupo-tag.tomado { color: #ef4444; border-color: #ef4444; }
-        
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            opacity: 0.6;
+
+        .empty-state { text-align: center; padding: 40px 20px; opacity: 0.6; }
+
+        /* === CAPTURA === */
+        #vista-captura { display: none; flex-direction: column; padding-bottom: 80px; }
+
+        .barra-sesion {
+            background: #1a1a1a; border: 1px solid #C9A961; border-radius: 10px;
+            padding: 10px 14px; margin-bottom: 12px;
+            display: flex; justify-content: space-between; align-items: center;
+            gap: 10px;
         }
-        
-        /* === PRODUCTOS (placeholder etapa V) === */
-        .vista-productos {
-            display: none;
+        .barra-sesion .info-folio { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+        .barra-sesion .folio-num { font-size: 13px; font-weight: bold; }
+        .barra-sesion .almacen-cap { font-size: 11px; opacity: 0.7; }
+        .barra-sesion .badge-grupo {
+            background: #C9A961; color: #000;
+            padding: 4px 10px; border-radius: 16px;
+            font-size: 12px; font-weight: bold;
         }
-        .vista-productos.visible { display: flex; flex-direction: column; }
-        
-        .barra-volver {
-            background: #1a1a1a;
-            border: 1px solid #333;
-            border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-            font-size: 14px;
+        .btn-volver-sesiones {
+            background: transparent; color: #C9A961; border: 1px solid #333;
+            padding: 6px 10px; border-radius: 6px; font-size: 11px;
+            cursor: pointer; font-family: inherit;
         }
-        
-        /* === LOADING === */
+
+        .barra-progreso {
+            display: flex; justify-content: space-between; align-items: center;
+            background: #0f0f0f; border: 1px solid #333; border-radius: 8px;
+            padding: 10px 12px; margin-bottom: 10px; font-size: 12px;
+        }
+        .badge-pendientes {
+            display: none; align-items: center; gap: 5px;
+            background: rgba(251,191,36,.2); color: #fcd34d;
+            padding: 3px 8px; border-radius: 12px; font-size: 11px;
+        }
+
+        .barra-buscar {
+            display: flex; gap: 6px; margin-bottom: 8px;
+        }
+        .barra-buscar input {
+            flex: 1; padding: 11px 12px;
+            background: #1a1a1a; border: 1px solid #333; border-radius: 8px;
+            color: #C9A961; font-size: 15px; font-family: inherit; outline: none;
+        }
+        .barra-buscar input:focus { border-color: #C9A961; }
+        .btn-fcat {
+            background: #C9A961; color: #000; border: none;
+            padding: 0 14px; border-radius: 8px; font-size: 13px; font-weight: bold;
+            cursor: pointer; font-family: inherit;
+            white-space: nowrap;
+        }
+
+        .filtros { display: flex; gap: 6px; margin-bottom: 10px; overflow-x: auto; padding-bottom: 4px; }
+        .btn-filtro {
+            background: transparent; color: #999; border: 1px solid #333;
+            padding: 6px 12px; border-radius: 16px; font-size: 12px;
+            cursor: pointer; font-family: inherit; white-space: nowrap;
+        }
+        .btn-filtro.activo { color: #C9A961; border-color: #C9A961; background: rgba(201,169,97,.1); }
+
+        /* Lista de productos */
+        .lista-productos {
+            display: flex; flex-direction: column; gap: 6px;
+        }
+        .producto-fila {
+            background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 8px;
+            padding: 10px 12px;
+            display: flex; justify-content: space-between; align-items: center;
+            gap: 10px; cursor: pointer;
+        }
+        .producto-fila:active { background: #222; }
+        .producto-fila.prioritario { border-left: 3px solid #C9A961; }
+        .producto-fila.capturado { background: rgba(74,222,128,.05); border-color: rgba(74,222,128,.3); }
+        .producto-fila.pendiente-sync { border-color: #fbbf24; }
+        .producto-fila.fcat { border-color: #c4b5fd; }
+
+        .prod-info { flex: 1; min-width: 0; }
+        .prod-desc { font-size: 13px; line-height: 1.3; margin-bottom: 3px; }
+        .prod-meta { display: flex; gap: 8px; font-size: 11px; opacity: 0.6; align-items: center; flex-wrap: wrap; }
+        .prod-clave { font-family: monospace; }
+        .prod-unidad { padding: 1px 6px; background: #2a2a2a; border-radius: 8px; }
+
+        .prod-cantidad {
+            font-size: 18px; font-weight: bold; min-width: 60px; text-align: right;
+        }
+        .prod-cantidad .placeholder { opacity: 0.3; font-weight: normal; }
+
+        .badge-pri {
+            background: #C9A961; color: #000; font-size: 9px; font-weight: bold;
+            padding: 1px 4px; border-radius: 3px; margin-right: 5px;
+            letter-spacing: 0.5px;
+        }
+        .badge-fcat {
+            background: #c4b5fd; color: #000; font-size: 9px; font-weight: bold;
+            padding: 1px 4px; border-radius: 3px; margin-right: 5px;
+        }
+        .badge-ok { color: #4ade80; font-size: 12px; }
+        .badge-pendiente { color: #fbbf24; font-size: 12px; }
+
+        /* Footer fijo - finalizar */
+        .footer-acciones {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: rgba(0,0,0,.95); border-top: 1px solid #333;
+            padding: 12px 16px; z-index: 50;
+            backdrop-filter: blur(10px);
+        }
+        .footer-acciones .contenedor {
+            max-width: 700px; margin: 0 auto;
+        }
+        .btn-finalizar {
+            width: 100%; padding: 13px; background: #ef4444; color: #fff;
+            border: none; border-radius: 8px; font-size: 14px; font-weight: bold;
+            cursor: pointer; font-family: inherit;
+        }
+        .btn-finalizar:active { opacity: 0.9; }
+
+        /* === MODALES === */
+        .modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,.85);
+            display: none; align-items: flex-end; justify-content: center;
+            z-index: 200;
+            padding: 0;
+        }
+        .modal-overlay.visible { display: flex; }
+        .modal-contenido {
+            background: #0a0a0a; border-top: 2px solid #C9A961;
+            border-radius: 16px 16px 0 0;
+            padding: 20px; width: 100%; max-width: 500px;
+            display: flex; flex-direction: column; gap: 12px;
+            max-height: 90vh; overflow-y: auto;
+        }
+        .modal-titulo { font-size: 16px; font-weight: bold; }
+        .modal-subtitulo { font-size: 12px; opacity: 0.6; margin-bottom: 5px; }
+        .modal-acciones {
+            display: flex; gap: 8px; margin-top: 8px;
+        }
+        .modal-acciones button {
+            flex: 1; padding: 13px;
+            border-radius: 8px; font-size: 14px; font-weight: bold;
+            cursor: pointer; font-family: inherit; border: none;
+        }
+        .btn-cancelar {
+            background: transparent; color: #999; border: 1px solid #333 !important;
+        }
+        .btn-guardar { background: #C9A961; color: #000; }
+
+        /* === SPINNERS === */
         .spinner {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            border: 2px solid rgba(0,0,0,0.3);
-            border-top-color: #000;
-            border-radius: 50%;
-            animation: girar 0.6s linear infinite;
-            margin-right: 8px;
-            vertical-align: middle;
+            display: inline-block; width: 14px; height: 14px;
+            border: 2px solid rgba(0,0,0,.3); border-top-color: #000;
+            border-radius: 50%; animation: girar 0.6s linear infinite;
+            margin-right: 6px; vertical-align: middle;
         }
         .spinner-grande {
-            width: 32px;
-            height: 32px;
-            border: 3px solid rgba(201,169,97,0.2);
-            border-top-color: #C9A961;
-            margin: 30px auto;
-            display: block;
+            width: 32px; height: 32px;
+            border: 3px solid rgba(201,169,97,.2); border-top-color: #C9A961;
+            border-radius: 50%; animation: girar 0.6s linear infinite;
+            margin: 30px auto; display: block;
         }
         @keyframes girar { to { transform: rotate(360deg); } }
-        
+
         .versionado {
-            text-align: center;
-            font-size: 11px;
-            opacity: 0.4;
-            padding: 12px;
+            text-align: center; font-size: 10px; opacity: 0.4;
+            padding: 10px;
         }
     </style>
 </head>
@@ -325,9 +330,9 @@
     </header>
 
     <main class="contenido">
-        
-        <!-- VISTA: LOGIN -->
-        <div class="vista-login" id="vista-login">
+
+        <!-- ========== LOGIN ========== -->
+        <div id="vista-login">
             <h2>Inventario Fogueira</h2>
             <p class="subtitulo">Inicia sesión para continuar</p>
             <div class="alerta" id="alerta-login"></div>
@@ -341,9 +346,9 @@
             </div>
             <button class="btn-principal" id="btn-login">Iniciar Sesión</button>
         </div>
-        
-        <!-- VISTA: SESIONES -->
-        <div class="vista-sesiones" id="vista-sesiones">
+
+        <!-- ========== SESIONES ========== -->
+        <div id="vista-sesiones">
             <div class="info-usuario">
                 <div>
                     <div class="nombre" id="us-nombre">-</div>
@@ -351,325 +356,122 @@
                 </div>
                 <div class="grupo-badge" id="us-grupo">-</div>
             </div>
-            
             <div class="alerta" id="alerta-sesiones"></div>
-            
-            <div class="seccion-titulo" id="titulo-sesiones">Sesiones disponibles</div>
+            <div class="seccion-titulo">Sesiones disponibles</div>
             <div class="lista-sesiones" id="lista-sesiones"></div>
         </div>
-        
-        <!-- VISTA: PRODUCTOS (placeholder, etapa V) -->
-        <div class="vista-productos" id="vista-productos">
-            <div class="barra-volver" id="btn-volver">← Volver a sesiones</div>
-            <div class="alerta info visible">
-                ✅ Sesión asignada correctamente. La pantalla de captura de productos llega en la siguiente actualización.
+
+        <!-- ========== CAPTURA ========== -->
+        <div id="vista-captura">
+            <div class="barra-sesion">
+                <div class="info-folio">
+                    <div class="folio-num" id="cap-folio">-</div>
+                    <div class="almacen-cap"><span id="cap-almacen">-</span> · Grupo <span id="cap-grupo">-</span></div>
+                </div>
+                <button class="btn-volver-sesiones" id="btn-volver-sesiones">← Sesiones</button>
             </div>
-            <div id="info-sesion-actual"></div>
+
+            <div class="barra-progreso">
+                <span>Progreso: <strong id="contador-progreso">0 / 0</strong></span>
+                <span class="badge-pendientes" id="badge-pendientes">⏳ <span id="contador-pendientes">0</span> pendientes</span>
+            </div>
+
+            <div class="barra-buscar">
+                <input type="text" id="input-busqueda" placeholder="Buscar por descripción, clave o grupo..." autocomplete="off" autocapitalize="off">
+                <button class="btn-fcat" id="btn-fcat">+ FCAT</button>
+            </div>
+
+            <div class="filtros">
+                <button class="btn-filtro activo" data-filtro="TODOS">Todos</button>
+                <button class="btn-filtro" data-filtro="PENDIENTES">Pendientes</button>
+                <button class="btn-filtro" data-filtro="CAPTURADOS">Capturados</button>
+                <button class="btn-filtro" data-filtro="PRIORITARIOS">Prioritarios</button>
+            </div>
+
+            <div class="lista-productos" id="lista-productos"></div>
         </div>
-        
+
     </main>
-    
-    <div class="versionado">PWA v0.3 — TODA Contraloría</div>
 
-<script>
-// ===================================================
-// CONFIGURACIÓN
-// ===================================================
-const API_URL = 'https://script.google.com/macros/s/AKfycbz77caU1oxYtguWK5FlFmXZ-3MDeRohMw66hkcCTPH8elcPtiKG1CZtoV6Dyr45DOe_/exec';
-const STORAGE_KEY = 'fogueira_pwa_sesion';
-
-// ===================================================
-// ESTADO
-// ===================================================
-let sesionActual = null;
-let folioSesionActiva = null;
-
-// ===================================================
-// HELPERS
-// ===================================================
-function $(id) { return document.getElementById(id); }
-
-function actualizarConexion() {
-    const indicador = $('indicador-conexion');
-    const texto = $('texto-conexion');
-    if (navigator.onLine) {
-        indicador.classList.remove('offline');
-        texto.textContent = 'En línea';
-    } else {
-        indicador.classList.add('offline');
-        texto.textContent = 'Sin conexión';
-    }
-}
-actualizarConexion();
-window.addEventListener('online', actualizarConexion);
-window.addEventListener('offline', actualizarConexion);
-
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').catch(()=>{});
-}
-
-async function llamarApi(accion, params = {}) {
-    const response = await fetch(API_URL + '?api=v1', {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ accion, params }),
-        redirect: 'follow'
-    });
-    if (!response.ok) throw new Error('HTTP ' + response.status);
-    return await response.json();
-}
-
-function mostrarAlerta(elementoId, mensaje, tipo = 'error') {
-    const el = $(elementoId);
-    el.textContent = mensaje;
-    el.className = 'alerta ' + tipo + ' visible';
-}
-function ocultarAlerta(elementoId) {
-    $(elementoId).classList.remove('visible');
-}
-
-function obtenerGrupoDelRol(rol) {
-    if (rol === 'CONTEO_G1') return 'G1';
-    if (rol === 'CONTEO_G2') return 'G2';
-    if (rol === 'AUDITOR_INV' || rol === 'CONTRALOR') return 'AUDITOR';
-    return null;
-}
-
-function formatearFecha(timestamp) {
-    if (!timestamp) return '-';
-    return new Date(timestamp).toLocaleString('es-MX', {
-        day: '2-digit', month: '2-digit', year: 'numeric',
-        hour: '2-digit', minute: '2-digit'
-    });
-}
-
-// ===================================================
-// LOGIN
-// ===================================================
-$('btn-login').addEventListener('click', async () => {
-    const usuario = $('usuario').value.trim();
-    const password = $('password').value;
-    
-    if (!usuario || !password) {
-        mostrarAlerta('alerta-login', 'Ingresa usuario y contraseña', 'error');
-        return;
-    }
-    if (!navigator.onLine) {
-        mostrarAlerta('alerta-login', 'Sin conexión. El login requiere internet.', 'error');
-        return;
-    }
-    
-    const btn = $('btn-login');
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner"></span>Validando...';
-    ocultarAlerta('alerta-login');
-    
-    try {
-        const r = await llamarApi('login', { usuario, password });
-        if (r.ok) {
-            sesionActual = r.data;
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(sesionActual));
-            mostrarSesiones();
-        } else {
-            mostrarAlerta('alerta-login', r.mensaje || r.error || 'Error', 'error');
-        }
-    } catch (e) {
-        mostrarAlerta('alerta-login', 'Error de red: ' + e.message, 'error');
-    } finally {
-        btn.disabled = false;
-        btn.textContent = 'Iniciar Sesión';
-    }
-});
-$('password').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') $('btn-login').click();
-});
-
-// ===================================================
-// VISTA: SESIONES
-// ===================================================
-async function mostrarSesiones() {
-    $('vista-login').style.display = 'none';
-    $('vista-productos').classList.remove('visible');
-    $('vista-sesiones').classList.add('visible');
-    $('btn-logout-header').style.display = 'inline-block';
-    
-    const grupo = obtenerGrupoDelRol(sesionActual.rol);
-    $('us-nombre').textContent = sesionActual.nombre;
-    $('us-rol').textContent = sesionActual.rol;
-    $('us-grupo').textContent = grupo || sesionActual.rol;
-    
-    await cargarSesiones();
-}
-
-async function cargarSesiones() {
-    const lista = $('lista-sesiones');
-    lista.innerHTML = '<div class="spinner spinner-grande"></div>';
-    ocultarAlerta('alerta-sesiones');
-    
-    try {
-        const r = await llamarApi('invsoft.listarSesiones', {
-            token: sesionActual.token,
-            filtros: {} // sin filtros, traemos todas y filtramos en cliente
-        });
-        
-        if (!r.ok) {
-            mostrarAlerta('alerta-sesiones', r.mensaje || r.error || 'Error al cargar', 'error');
-            lista.innerHTML = '';
-            return;
-        }
-        
-        // Filtrar solo sesiones activas (ABIERTA o EN_PROGRESO)
-        const activas = (r.sesiones || []).filter(s => 
-            s.estatus === 'ABIERTA' || s.estatus === 'EN_PROGRESO'
-        );
-        
-        if (activas.length === 0) {
-            lista.innerHTML = '<div class="empty-state">No hay sesiones activas para contar.</div>';
-            return;
-        }
-        
-        const grupo = obtenerGrupoDelRol(sesionActual.rol);
-        lista.innerHTML = activas.map(s => renderSesion(s, grupo)).join('');
-        
-        // Listeners
-        document.querySelectorAll('.tarjeta-sesion').forEach(t => {
-            t.addEventListener('click', () => entrarASesion(t.dataset.folio));
-        });
-        
-    } catch (e) {
-        mostrarAlerta('alerta-sesiones', 'Error: ' + e.message, 'error');
-        lista.innerHTML = '';
-    }
-}
-
-function renderSesion(s, miGrupo) {
-    const yoEstoyEn = (miGrupo === 'G1' && s.g1_usuario === sesionActual.usuario) ||
-                     (miGrupo === 'G2' && s.g2_usuario === sesionActual.usuario);
-    const miGrupoTag = miGrupo === 'G1' ? s.g1_usuario : (miGrupo === 'G2' ? s.g2_usuario : '');
-    
-    const g1Class = !s.g1_usuario ? 'libre' : (s.g1_usuario === sesionActual.usuario ? 'activo' : 'tomado');
-    const g2Class = !s.g2_usuario ? 'libre' : (s.g2_usuario === sesionActual.usuario ? 'activo' : 'tomado');
-    
-    return `
-        <div class="tarjeta-sesion" data-folio="${s.folio}">
-            <div class="top-row">
-                <span class="folio">${s.folio}</span>
-                <span class="estatus ${s.estatus}">${s.estatus}</span>
-            </div>
-            <div class="almacen">📍 ${s.almacen_nombre}</div>
-            <div class="meta">
-                <span>${s.total_productos} productos</span>
-                <span>·</span>
-                <span>Tipo: ${s.tipo_sesion}</span>
-            </div>
-            <div class="grupos">
-                <span class="grupo-tag ${g1Class}">G1: ${s.g1_usuario || 'libre'}</span>
-                <span class="grupo-tag ${g2Class}">G2: ${s.g2_usuario || 'libre'}</span>
-            </div>
+    <!-- ========== FOOTER FIJO (solo en captura) ========== -->
+    <div class="footer-acciones" id="footer-acciones" style="display:none;">
+        <div class="contenedor">
+            <button class="btn-finalizar" id="btn-finalizar">Finalizar mi grupo</button>
         </div>
-    `;
-}
+    </div>
 
-// ===================================================
-// ENTRAR A SESIÓN (asignar grupo)
-// ===================================================
-async function entrarASesion(folio) {
-    const grupo = obtenerGrupoDelRol(sesionActual.rol);
-    
-    if (!grupo || grupo === 'AUDITOR') {
-        alert('Tu rol (' + sesionActual.rol + ') no captura inventario. Solo G1/G2 pueden contar.');
-        return;
-    }
-    
-    if (!confirm(`¿Entrar a contar la sesión ${folio} como ${grupo}?`)) return;
-    
-    try {
-        const r = await llamarApi('invsoft.asignarGrupo', {
-            token: sesionActual.token,
-            folio: folio,
-            grupo: grupo
-        });
-        
-        if (!r.ok) {
-            alert('No se pudo entrar: ' + (r.mensaje || r.error));
-            return;
-        }
-        
-        folioSesionActiva = folio;
-        mostrarVistaProductos(folio);
-        
-    } catch (e) {
-        alert('Error: ' + e.message);
-    }
-}
-
-function mostrarVistaProductos(folio) {
-    $('vista-sesiones').classList.remove('visible');
-    $('vista-productos').classList.add('visible');
-    $('info-sesion-actual').innerHTML = `
-        <div class="info-usuario">
+    <!-- ========== MODAL CAPTURA ========== -->
+    <div class="modal-overlay" id="modal-captura">
+        <div class="modal-contenido">
             <div>
-                <div class="nombre">Sesión: ${folio}</div>
-                <div class="rol">Asignado como ${obtenerGrupoDelRol(sesionActual.rol)}</div>
+                <div class="modal-titulo" id="modal-cap-desc">-</div>
+                <div class="modal-subtitulo" id="modal-cap-clave">-</div>
+            </div>
+            <div class="campo">
+                <label>Cantidad contada</label>
+                <input type="number" id="modal-cap-input" inputmode="decimal" step="any" min="0" placeholder="0">
+            </div>
+            <div class="campo">
+                <label>Observación (opcional)</label>
+                <textarea id="modal-cap-obs" rows="2" placeholder="Notas, condición, etc."></textarea>
+            </div>
+            <div class="modal-acciones">
+                <button class="btn-cancelar" id="modal-cap-cancelar">Cancelar</button>
+                <button class="btn-guardar" id="modal-cap-guardar">Guardar</button>
             </div>
         </div>
-    `;
-}
+    </div>
 
-$('btn-volver').addEventListener('click', () => {
-    folioSesionActiva = null;
-    mostrarSesiones();
-});
+    <!-- ========== MODAL FCAT ========== -->
+    <div class="modal-overlay" id="modal-fcat">
+        <div class="modal-contenido">
+            <div>
+                <div class="modal-titulo">Producto Fuera de Catálogo</div>
+                <div class="modal-subtitulo">Producto que no aparece en la lista del sistema</div>
+            </div>
+            <div class="campo">
+                <label>Descripción *</label>
+                <input type="text" id="fcat-desc" placeholder="ej. Crema cacahuate 340g" autocomplete="off">
+            </div>
+            <div class="campo">
+                <label>Cantidad *</label>
+                <input type="number" id="fcat-cant" inputmode="decimal" step="any" min="0" placeholder="0">
+            </div>
+            <div class="campo">
+                <label>Unidad (opcional)</label>
+                <input type="text" id="fcat-unidad" placeholder="kg, lt, pza..." autocomplete="off">
+            </div>
+            <div class="campo">
+                <label>Observación (opcional)</label>
+                <textarea id="fcat-obs" rows="2"></textarea>
+            </div>
+            <div class="modal-acciones">
+                <button class="btn-cancelar" id="fcat-cancelar">Cancelar</button>
+                <button class="btn-guardar" id="fcat-guardar">Agregar</button>
+            </div>
+        </div>
+    </div>
 
-// ===================================================
-// LOGOUT
-// ===================================================
-$('btn-logout-header').addEventListener('click', async () => {
-    if (!confirm('¿Cerrar sesión?')) return;
-    if (sesionActual && navigator.onLine) {
-        try { await llamarApi('cerrarSesion', { token: sesionActual.token }); } catch(e){}
-    }
-    localStorage.removeItem(STORAGE_KEY);
-    sesionActual = null;
-    folioSesionActiva = null;
-    
-    $('vista-sesiones').classList.remove('visible');
-    $('vista-productos').classList.remove('visible');
-    $('vista-login').style.display = 'flex';
-    $('btn-logout-header').style.display = 'none';
-    $('usuario').value = '';
-    $('password').value = '';
-    ocultarAlerta('alerta-login');
-});
+    <div class="versionado">PWA v0.4 — TODA Contraloría</div>
 
-// ===================================================
-// VALIDAR SESIÓN AL CARGAR
-// ===================================================
-async function validarSesionExistente() {
-    const guardado = localStorage.getItem(STORAGE_KEY);
-    if (!guardado) return;
-    try {
-        sesionActual = JSON.parse(guardado);
-        if (navigator.onLine) {
-            const r = await llamarApi('validarSesion', { token: sesionActual.token });
-            if (r.ok) {
-                sesionActual.expira = r.data.expira;
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(sesionActual));
-                mostrarSesiones();
-            } else {
-                localStorage.removeItem(STORAGE_KEY);
-                sesionActual = null;
+    <script src="api.js"></script>
+    <script src="app.js"></script>
+    <script>
+        // Mostrar/ocultar footer según vista activa
+        function _checkFooter() {
+            const vis = document.getElementById('vista-captura');
+            const foot = document.getElementById('footer-acciones');
+            if (vis && foot) {
+                foot.style.display = (vis.style.display === 'none' || !vis.style.display) ? 'none' : '';
             }
-        } else {
-            mostrarSesiones();
         }
-    } catch (e) {
-        localStorage.removeItem(STORAGE_KEY);
-    }
-}
-
-validarSesionExistente();
-</script>
+        const _obs = new MutationObserver(_checkFooter);
+        document.addEventListener('DOMContentLoaded', () => {
+            const v = document.getElementById('vista-captura');
+            if (v) _obs.observe(v, { attributes: true, attributeFilter: ['style'] });
+            _checkFooter();
+        });
+    </script>
 
 </body>
 </html>
