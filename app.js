@@ -348,20 +348,21 @@ function renderProductos() {
         const cantidad = c ? c.cantidad : '';
         
         return `
-            <div class="${claseFila}" data-clave="${p.clave}">
-                <div class="prod-info" onclick="abrirCaptura('${p.clave}')">
-                    <div class="prod-desc">${badgePri}${badgeFcat}${escapeHtml(p.descripcion)}</div>
-                    <div class="prod-meta">
-                        <span class="prod-clave">${p.clave}</span>
-                        <span class="prod-unidad">${p.unidad || ''}</span>
-                        ${badgeSync}
-                    </div>
-                </div>
-                <div class="prod-cantidad" onclick="abrirCaptura('${p.clave}')">
-                    ${cantidad !== '' ? cantidad : '<span class="placeholder">—</span>'}
-                </div>
+            return `
+    <div class="${claseFila}" data-clave="${p.clave}">
+        <div class="prod-info" onclick="abrirCaptura('${p.clave}')">
+            <div class="prod-desc">${badgePri}${badgeFcat}${escapeHtml(p.descripcion)}${p.unidad ? ' · ' + escapeHtml(p.unidad) : ''}</div>
+            <div class="prod-meta">
+                <span class="prod-clave">${p.clave}</span>
+                ${p.grupo_producto ? `<span class="prod-grupo">${escapeHtml(p.grupo_producto)}</span>` : ''}
+                ${badgeSync}
             </div>
-        `;
+        </div>
+        <div class="prod-cantidad" onclick="abrirCaptura('${p.clave}')">
+            ${cantidad !== '' ? cantidad : '<span class="placeholder">—</span>'}
+        </div>
+    </div>
+`;
     }).join('');
     
     actualizarContadores();
