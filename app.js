@@ -1,30 +1,28 @@
 // ====================================================
 // FOGUEIRA PWA - Lógica principal
 // ----------------------------------------------------
-// Orquesta el flujo: login → sesiones → captura → fin
-// CAMBIO 09/05/2026: agregada vista de conciliación móvil
+// Orquesta el flujo: login → sesiones → captura/conciliación → fin
+// CAMBIO 09/05/2026: PWA genera cédula PDF + Excel al cerrar
 // ====================================================
 
 const STORAGE_KEY = 'fogueira_pwa_sesion';
 const STORAGE_BORRADOR = 'fogueira_pwa_borrador';
 const STORAGE_COLA = 'fogueira_pwa_cola_sync';
 
-// ====================================================
-// ESTADO GLOBAL
-// ====================================================
-let sesionActual = null;        // {token, usuario, nombre, rol, expira}
-let folioActivo = null;          // INV-XXXXX-XXX (captura)
-let grupoActivo = null;          // 'G1' | 'G2'
-let productos = [];              // Array de todos los productos a contar
-let conteosLocales = {};         // {clave: {cantidad, observacion, sincronizado, timestamp}}
+// Estado global
+let sesionActual = null;
+let folioActivo = null;
+let grupoActivo = null;
+let productos = [];
+let conteosLocales = {};
 let busquedaTexto = '';
-let filtroActual = 'TODOS';      // TODOS | PENDIENTES | CAPTURADOS | PRIORITARIOS
+let filtroActual = 'TODOS';
 
 // Conciliación
-let folioConc = null;            // folio que se está conciliando
-let conciliacionData = null;     // respuesta de apiObtenerConciliacion
+let folioConc = null;
+let conciliacionData = null;
 let busquedaConc = '';
-let filtroConc = 'ATENCION';     // ATENCION | PENDIENTES | TODOS
+let filtroConc = 'ATENCION';
 
 // ====================================================
 // HELPERS DOM
@@ -191,7 +189,6 @@ async function cargarSesiones() {
             return;
         }
 
-        // Incluir EN_CONCILIACION (NUEVO 09/05/2026)
         const activas = (r.sesiones || []).filter(s =>
             s.estatus === 'ABIERTA' ||
             s.estatus === 'EN_PROGRESO' ||
@@ -692,7 +689,7 @@ function volverDeConciliacion() {
 }
 
 // ====================================================
-// CONCILIACIÓN (NUEVO 09/05/2026)
+// CONCILIACIÓN
 // ====================================================
 async function irAConciliar(folio) {
     folioConc = folio;
@@ -761,7 +758,6 @@ function renderConciliacion() {
     const c = conciliacionData;
     const k = c.kpis;
 
-    // KPIs
     let kpisHTML = '';
     kpisHTML += kpiCard('Total', k.total, '', '');
     kpisHTML += kpiCard('Diferencia', k.con_diferencia, k.con_diferencia > 0 ? 'rojo' : 'verde', '');
@@ -775,7 +771,6 @@ function renderConciliacion() {
     }
     $('conc-kpis').innerHTML = kpisHTML;
 
-    // Lista
     let partidas = c.partidas.slice();
     if (filtroConc === 'ATENCION') {
         partidas = partidas.filter(p => p.requiere_atencion);
@@ -789,7 +784,6 @@ function renderConciliacion() {
             String(p.clave).toLowerCase().indexOf(q) !== -1
         );
     }
-    // Ordenar: pendientes primero, después por valor descendente
     partidas.sort((a, b) => {
         const aPend = a.requiere_atencion && !a.resuelto;
         const bPend = b.requiere_atencion && !b.resuelto;
@@ -803,7 +797,6 @@ function renderConciliacion() {
         $('conc-lista').innerHTML = partidas.map(p => renderPartida(p)).join('');
     }
 
-    // Botón cerrar
     const btn = $('btn-cerrar-inv');
     if (btn) {
         const bloqueoCosto = (k.requieren_costo_manual || 0) > 0;
@@ -909,7 +902,6 @@ function abrirResolucion(clave) {
     $('res-g1').textContent = p.cantidad_g1 !== null ? p.cantidad_g1 : '—';
     $('res-g2').textContent = p.cantidad_g2 !== null ? p.cantidad_g2 : '—';
 
-    // Botones rápidos
     let botones = '';
     if (p.cantidad_g1 !== null) {
         botones += '<button type="button" class="btn-rapido" onclick="document.getElementById(\'res-cant\').value=' + p.cantidad_g1 + ';">G1: ' + p.cantidad_g1 + '</button>';
@@ -920,14 +912,10 @@ function abrirResolucion(clave) {
     botones += '<button type="button" class="btn-rapido" onclick="document.getElementById(\'res-cant\').value=' + p.existencia_soft + ';">Soft: ' + p.existencia_soft + '</button>';
     $('res-botones-rapidos').innerHTML = botones;
 
-    // Cantidad inicial
     const cantInicial = p.cantidad_final !== null ? p.cantidad_final : (p.cantidad_sugerida !== null ? p.cantidad_sugerida : '');
     $('res-cant').value = cantInicial;
-
-    // Comentario
     $('res-com').value = p.comentario_resolucion || '';
 
-    // Campo costo manual condicional
     const necesitaCosto = (Number(p.ultimo_costo) || 0) <= 0.0001;
     const yaTiene = !!p.costo_manual_asignado;
     const cont = $('res-costo-container');
@@ -1038,10 +1026,10 @@ async function guardarResolucionMovil() {
 }
 
 // ====================================================
-// CERRAR INVENTARIO
+// CERRAR INVENTARIO + GENERAR CÉDULA AUTOMÁTICAMENTE
 // ====================================================
 async function cerrarInventario() {
-    if (!confirm('¿Confirmas el cierre de la sesión?\n\nUna vez cerrada NO se puede reabrir.')) return;
+    if (!confirm('¿Confirmas el cierre de la sesión?\n\nUna vez cerrada NO se puede reabrir.\nDespués se generará automáticamente la cédula PDF y el reporte Excel.')) return;
 
     const btn = $('btn-cerrar-inv');
     btn.disabled = true;
@@ -1055,15 +1043,74 @@ async function cerrarInventario() {
             btn.textContent = 'Cerrar inventario';
             return;
         }
-        const valor = (r.valor_diferencia || 0).toLocaleString('es-MX', {minimumFractionDigits:2,maximumFractionDigits:2});
-        alert('✅ Sesión cerrada.\n\nDiferencias: ' + r.productos_diferencia + '\nValor neto: $ ' + valor +
-              '\n\nEl reporte está disponible en PEPS web.');
-        volverDeConciliacion();
+
+        // Generar cédula PDF + Excel automáticamente
+        btn.innerHTML = '<span class="spinner"></span>Generando cédula y Excel...';
+        let cedulaInfo = null;
+        try {
+            const rCed = await apiGenerarCedula(sesionActual.token, folioConc);
+            if (rCed && rCed.ok) cedulaInfo = rCed;
+            else if (rCed) console.error('Error cédula:', rCed.mensaje || rCed.error);
+        } catch (e) {
+            console.error('Error generando cédula:', e);
+        }
+
+        mostrarModalCierreExitoso(r, cedulaInfo);
     } catch (e) {
         alert('Error de red: ' + e.message);
         btn.disabled = false;
         btn.textContent = 'Cerrar inventario';
     }
+}
+
+function mostrarModalCierreExitoso(cierre, cedula) {
+    const valor = (cierre.valor_diferencia || 0).toLocaleString('es-MX', {minimumFractionDigits:2,maximumFractionDigits:2});
+
+    let html = '<div id="modal-cerrado" style="position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:300;display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto;">';
+    html += '<div style="background:#0a0a0a;border:2px solid #4ade80;border-radius:12px;padding:22px;max-width:440px;width:100%;">';
+    html += '<div style="color:#4ade80;font-size:18px;font-weight:bold;margin-bottom:14px;text-align:center;">✅ Inventario cerrado</div>';
+
+    html += '<div style="background:#1a1a1a;border-radius:8px;padding:14px;margin-bottom:16px;">';
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">';
+    html += '<div><div style="font-size:11px;opacity:0.7;">Diferencias</div><div style="font-size:22px;font-weight:bold;color:#fff;">' + (cierre.productos_diferencia || 0) + '</div></div>';
+    html += '<div><div style="font-size:11px;opacity:0.7;">Productos contados</div><div style="font-size:22px;font-weight:bold;color:#fff;">' + (cierre.productos_contados || 0) + '</div></div>';
+    html += '</div>';
+    html += '<div style="margin-top:10px;padding-top:10px;border-top:1px solid #333;">';
+    html += '<div style="font-size:11px;opacity:0.7;">Valor neto de diferencias</div>';
+    html += '<div style="font-size:20px;font-weight:bold;color:#C9A961;">$ ' + valor + ' MXN</div>';
+    if ((cierre.con_costo_manual || 0) > 0) {
+        html += '<div style="font-size:11px;color:#C9A961;margin-top:6px;">' + cierre.con_costo_manual + ' partida(s) con costo asignado manualmente</div>';
+    }
+    html += '</div></div>';
+
+    if (cedula && cedula.ok) {
+        html += '<div style="font-size:11px;opacity:0.8;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px;">Reportes generados</div>';
+        html += '<a href="' + cedula.cedula_url + '" target="_blank" rel="noopener" ' +
+                'style="display:block;background:#C9A961;color:#000;padding:14px;border-radius:8px;text-align:center;font-weight:bold;text-decoration:none;margin-bottom:8px;font-size:14px;">' +
+                '📄 Cédula PDF (firma G1/G2)</a>';
+        if (cedula.excel_url) {
+            html += '<a href="' + cedula.excel_url + '" target="_blank" rel="noopener" ' +
+                    'style="display:block;background:transparent;color:#C9A961;padding:14px;border:1px solid #C9A961;border-radius:8px;text-align:center;font-weight:bold;text-decoration:none;margin-bottom:8px;font-size:14px;">' +
+                    '📊 Reporte Excel detallado</a>';
+        }
+        html += '<div style="font-size:10px;opacity:0.6;margin:8px 0 14px 0;text-align:center;">Los archivos quedan también en Drive del proyecto</div>';
+    } else {
+        html += '<div style="background:rgba(251,191,36,.15);border:1px solid #fbbf24;color:#fcd34d;padding:12px;border-radius:6px;font-size:12px;margin-bottom:14px;line-height:1.4;">';
+        html += '⚠ La sesión cerró correctamente, pero no se pudo generar el reporte automáticamente. ';
+        html += 'Pídele al Contralor que ejecute <code>pruebaInvsoftGenerarCedulaPDF</code> en Apps Script con el folio.';
+        html += '</div>';
+    }
+
+    html += '<button onclick="cerrarModalCierre()" style="width:100%;padding:13px;background:transparent;color:#999;border:1px solid #333;border-radius:8px;font-weight:bold;cursor:pointer;font-family:inherit;">Cerrar y volver a sesiones</button>';
+    html += '</div></div>';
+
+    document.body.insertAdjacentHTML('beforeend', html);
+}
+
+function cerrarModalCierre() {
+    const m = document.getElementById('modal-cerrado');
+    if (m) m.remove();
+    volverDeConciliacion();
 }
 
 // ====================================================
@@ -1162,16 +1209,13 @@ function setupApp() {
     if (window.__fgInit) return;
     window.__fgInit = true;
 
-    // Login
     $('btn-login').addEventListener('click', hacerLogin);
     $('password').addEventListener('keydown', e => {
         if (e.key === 'Enter') hacerLogin();
     });
 
-    // Logout
     $('btn-logout-header').addEventListener('click', hacerLogout);
 
-    // Captura
     $('btn-volver-sesiones').addEventListener('click', volverASesiones);
     $('input-busqueda').addEventListener('input', e => setBusqueda(e.target.value));
     $$('.btn-filtro[data-filtro]').forEach(b => {
@@ -1180,15 +1224,12 @@ function setupApp() {
     $('btn-fcat').addEventListener('click', abrirFCat);
     $('btn-finalizar').addEventListener('click', finalizarMiGrupo);
 
-    // Modal captura
     $('modal-cap-cancelar').addEventListener('click', cerrarModalCaptura);
     $('modal-cap-guardar').addEventListener('click', guardarCaptura);
 
-    // Modal FCAT
     $('fcat-cancelar').addEventListener('click', cerrarFCat);
     $('fcat-guardar').addEventListener('click', guardarFCat);
 
-    // Conciliación
     $('btn-volver-conc').addEventListener('click', volverDeConciliacion);
     $('conc-busq').addEventListener('input', e => setBusquedaConc(e.target.value));
     $$('.btn-filtro[data-filtro-conc]').forEach(b => {
@@ -1196,7 +1237,6 @@ function setupApp() {
     });
     $('btn-cerrar-inv').addEventListener('click', cerrarInventario);
 
-    // Modal resolución
     $('res-cancelar').addEventListener('click', cerrarModalResolucion);
     $('res-guardar').addEventListener('click', guardarResolucionMovil);
 
@@ -1209,6 +1249,7 @@ if (document.readyState === 'loading') {
     setupApp();
 }
 
-// Hacer accesibles las funciones inline (onclick="...")
+// Exponer para onclick inline
 window.abrirCaptura = abrirCaptura;
 window.abrirResolucion = abrirResolucion;
+window.cerrarModalCierre = cerrarModalCierre;
