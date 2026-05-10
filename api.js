@@ -1,16 +1,10 @@
 // ====================================================
 // FOGUEIRA PWA - Cliente API
-// ----------------------------------------------------
-// Encapsula todas las llamadas al Apps Script backend.
-// Cambios 09/05/2026: funciones de conciliación móvil.
+// Cambios 09/05/2026: funciones de conciliación + cédula
 // ====================================================
 
 const API_URL = 'https://script.google.com/macros/s/AKfycbz77caU1oxYtguWK5FlFmXZ-3MDeRohMw66hkcCTPH8elcPtiKG1CZtoV6Dyr45DOe_/exec';
 
-/**
- * Llamada genérica al API.
- * Usa text/plain para evitar CORS preflight en Apps Script.
- */
 async function llamarApi(accion, params = {}) {
     const response = await fetch(API_URL + '?api=v1', {
         method: 'POST',
@@ -92,4 +86,7 @@ async function apiCerrarInventario(token, folio) {
 }
 async function apiGenerarReporte(token, folio) {
     return await llamarApi('invsoft.generarReporte', { token, folio });
+}
+async function apiGenerarCedula(token, folio) {
+    return await llamarApi('invsoft.generarCedula', { token, folio });
 }
