@@ -147,6 +147,18 @@
         .grupo-tag.activo { border-color: #C9A961; color: #C9A961; }
         .grupo-tag.libre  { color: #4ade80; border-color: #4ade80; }
         .grupo-tag.tomado { color: #ef4444; border-color: #ef4444; }
+        .tarjeta-sesion .accion-conciliar {
+            margin-top: 8px;
+            padding: 6px 10px;
+            background: rgba(168,85,247,.15);
+            border: 1px solid #c4b5fd;
+            border-radius: 6px;
+            color: #c4b5fd;
+            text-align: center;
+            font-size: 12px;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
 
         .empty-state { text-align: center; padding: 40px 20px; opacity: 0.6; }
 
@@ -247,7 +259,136 @@
         .badge-ok { color: #4ade80; font-size: 12px; }
         .badge-pendiente { color: #fbbf24; font-size: 12px; }
 
-        /* Footer fijo - finalizar */
+        /* === CONCILIACIÓN (NUEVO) === */
+        #vista-conciliacion { display: none; flex-direction: column; padding-bottom: 80px; }
+
+        .conc-header {
+            background: linear-gradient(135deg, rgba(168,85,247,.1), rgba(201,169,97,.05));
+            border: 1px solid #c4b5fd; border-radius: 10px;
+            padding: 10px 14px; margin-bottom: 12px;
+            display: flex; justify-content: space-between; align-items: center;
+            gap: 10px;
+        }
+        .conc-header .info-folio { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+        .conc-header .folio-num { font-size: 13px; font-weight: bold; color: #c4b5fd; }
+        .conc-header .almacen-cap { font-size: 11px; opacity: 0.8; }
+
+        .kpis-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
+            margin-bottom: 10px;
+        }
+        .kpi-card {
+            background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 8px;
+            padding: 8px 6px; text-align: center;
+        }
+        .kpi-card .kpi-label {
+            font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px;
+            opacity: 0.7; margin-bottom: 2px;
+        }
+        .kpi-card .kpi-value { font-size: 18px; font-weight: bold; color: #fff; line-height: 1; }
+        .kpi-card.verde { border-color: #4ade80; }
+        .kpi-card.verde .kpi-value { color: #4ade80; }
+        .kpi-card.rojo { border-color: #ef4444; }
+        .kpi-card.rojo .kpi-value { color: #fca5a5; }
+        .kpi-card.amarillo { border-color: #fbbf24; }
+        .kpi-card.amarillo .kpi-value { color: #fcd34d; }
+        .kpi-card.naranja { border-color: #fb923c; }
+        .kpi-card.naranja .kpi-value { color: #fdba74; }
+        .kpi-card.dorado { border-color: #C9A961; }
+        .kpi-card.dorado .kpi-value { color: #C9A961; }
+
+        .partida-card {
+            background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px;
+            padding: 12px; margin-bottom: 8px;
+        }
+        .partida-card.ok { border-left: 3px solid #4ade80; }
+        .partida-card.dif { border-left: 3px solid #ef4444; }
+        .partida-card.resuelto { border-left: 3px solid #4ade80; background: rgba(74,222,128,.05); }
+        .partida-card .desc {
+            font-size: 13px; font-weight: bold; color: #fff; margin-bottom: 3px;
+        }
+        .partida-card .clave-row {
+            font-size: 11px; opacity: 0.6; margin-bottom: 8px;
+            display: flex; gap: 8px; flex-wrap: wrap;
+        }
+        .conteos-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px;
+            margin: 8px 0; text-align: center;
+        }
+        .conteo-cell {
+            background: #0f0f0f; padding: 6px 4px; border-radius: 6px;
+            border: 1px solid #2a2a2a;
+        }
+        .conteo-cell .lbl { font-size: 9px; opacity: 0.7; margin-bottom: 2px; letter-spacing: 0.5px; }
+        .conteo-cell .val { font-size: 14px; font-weight: bold; color: #fff; line-height: 1; }
+        .conteo-cell.soft .lbl { color: #fbbf24; }
+        .conteo-cell.final .lbl { color: #C9A961; }
+        .conteo-cell.final .val { color: #C9A961; }
+        .partida-bottom {
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 6px; margin-top: 6px;
+        }
+        .partida-badges { display: flex; gap: 4px; flex-wrap: wrap; }
+        .badge {
+            padding: 2px 7px; border-radius: 10px;
+            font-size: 10px; font-weight: bold;
+            display: inline-flex; align-items: center; gap: 3px;
+        }
+        .badge-verde { background: rgba(74,222,128,.2); color: #86efac; }
+        .badge-rojo { background: rgba(239,68,68,.2); color: #fca5a5; }
+        .badge-amarillo { background: rgba(251,191,36,.2); color: #fcd34d; }
+        .badge-naranja { background: rgba(251,146,60,.2); color: #fdba74; }
+        .badge-dorado { background: rgba(201,169,97,.2); color: #C9A961; }
+        .btn-resolver {
+            background: #C9A961; color: #000; border: none;
+            padding: 7px 14px; border-radius: 6px; font-size: 12px; font-weight: bold;
+            cursor: pointer; font-family: inherit;
+        }
+        .btn-resolver:active { opacity: 0.85; }
+
+        /* Costo manual: campo destacado en modal */
+        .campo-costo-manual {
+            border: 2px solid #fb923c;
+            background: rgba(251,146,60,.08);
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        .campo-costo-manual.asignado {
+            border-color: #C9A961;
+            background: rgba(201,169,97,.08);
+        }
+        .campo-costo-manual label {
+            color: #fdba74;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+            font-size: 12px;
+        }
+        .campo-costo-manual.asignado label { color: #C9A961; }
+        .campo-costo-manual input {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .campo-costo-manual .help {
+            font-size: 10px;
+            opacity: 0.7;
+            margin-top: 6px;
+            line-height: 1.4;
+        }
+
+        .botones-rapidos {
+            display: flex; gap: 4px; margin-bottom: 6px; flex-wrap: wrap;
+        }
+        .btn-rapido {
+            background: #1a1a1a; border: 1px solid #333;
+            color: #C9A961; padding: 5px 10px;
+            border-radius: 6px; font-size: 11px;
+            cursor: pointer; font-family: inherit;
+        }
+        .btn-rapido:active { background: #2a2a2a; }
+
+        /* Footer fijo - finalizar / cerrar */
         .footer-acciones {
             position: fixed; bottom: 0; left: 0; right: 0;
             background: rgba(0,0,0,.95); border-top: 1px solid #333;
@@ -263,6 +404,15 @@
             cursor: pointer; font-family: inherit;
         }
         .btn-finalizar:active { opacity: 0.9; }
+        .btn-cerrar-inv {
+            width: 100%; padding: 13px; background: #4ade80; color: #000;
+            border: none; border-radius: 8px; font-size: 14px; font-weight: bold;
+            cursor: pointer; font-family: inherit;
+        }
+        .btn-cerrar-inv:active { opacity: 0.9; }
+        .btn-cerrar-inv:disabled {
+            background: #333; color: #888; cursor: not-allowed;
+        }
 
         /* === MODALES === */
         .modal-overlay {
@@ -338,7 +488,7 @@
             <div class="alerta" id="alerta-login"></div>
             <div class="campo">
                 <label for="usuario">Usuario</label>
-                <input type="text" id="usuario" autocomplete="username" autocapitalize="off" placeholder="ej. inv_g1_a">
+                <input type="text" id="usuario" autocomplete="username" autocapitalize="off" placeholder="ej. piso_g1">
             </div>
             <div class="campo">
                 <label for="password">Contraseña</label>
@@ -391,12 +541,45 @@
             <div class="lista-productos" id="lista-productos"></div>
         </div>
 
+        <!-- ========== CONCILIACIÓN (NUEVO) ========== -->
+        <div id="vista-conciliacion">
+            <div class="conc-header">
+                <div class="info-folio">
+                    <div class="folio-num" id="conc-folio">-</div>
+                    <div class="almacen-cap"><span id="conc-almacen">-</span> · Conciliación</div>
+                </div>
+                <button class="btn-volver-sesiones" id="btn-volver-conc">← Sesiones</button>
+            </div>
+
+            <div class="kpis-grid" id="conc-kpis"></div>
+
+            <div class="barra-buscar">
+                <input type="text" id="conc-busq" placeholder="Buscar partida..." autocomplete="off" autocapitalize="off">
+            </div>
+
+            <div class="filtros">
+                <button class="btn-filtro activo" data-filtro-conc="ATENCION">Con diferencia</button>
+                <button class="btn-filtro" data-filtro-conc="PENDIENTES">Pendientes</button>
+                <button class="btn-filtro" data-filtro-conc="TODOS">Todos</button>
+            </div>
+
+            <div class="alerta" id="alerta-conciliacion"></div>
+            <div id="conc-lista"></div>
+        </div>
+
     </main>
 
-    <!-- ========== FOOTER FIJO (solo en captura) ========== -->
-    <div class="footer-acciones" id="footer-acciones" style="display:none;">
+    <!-- ========== FOOTER FIJO CAPTURA ========== -->
+    <div class="footer-acciones" id="footer-captura" style="display:none;">
         <div class="contenedor">
             <button class="btn-finalizar" id="btn-finalizar">Finalizar mi grupo</button>
+        </div>
+    </div>
+
+    <!-- ========== FOOTER FIJO CONCILIACIÓN ========== -->
+    <div class="footer-acciones" id="footer-conciliacion" style="display:none;">
+        <div class="contenedor">
+            <button class="btn-cerrar-inv" id="btn-cerrar-inv">Cerrar inventario</button>
         </div>
     </div>
 
@@ -452,24 +635,76 @@
         </div>
     </div>
 
-    <div class="versionado">PWA v0.4 — TODA Contraloría</div>
+    <!-- ========== MODAL RESOLUCIÓN (NUEVO) ========== -->
+    <div class="modal-overlay" id="modal-resolucion">
+        <div class="modal-contenido">
+            <div>
+                <div class="modal-titulo">Resolver diferencia</div>
+                <div class="modal-subtitulo" id="res-prod-info">-</div>
+            </div>
+
+            <div class="kpis-grid" style="grid-template-columns:repeat(3,1fr);">
+                <div class="kpi-card amarillo">
+                    <div class="kpi-label">Soft</div>
+                    <div class="kpi-value" id="res-soft">-</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">G1</div>
+                    <div class="kpi-value" id="res-g1">-</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">G2</div>
+                    <div class="kpi-value" id="res-g2">-</div>
+                </div>
+            </div>
+
+            <div class="campo">
+                <label>Cantidad final acordada</label>
+                <div class="botones-rapidos" id="res-botones-rapidos"></div>
+                <input type="number" id="res-cant" inputmode="decimal" step="any" min="0" placeholder="0">
+            </div>
+
+            <div id="res-costo-container"></div>
+
+            <div class="campo">
+                <label>Comentario (mín. 10 caracteres) *</label>
+                <textarea id="res-com" rows="3" placeholder="¿Por qué hay diferencia y cómo se resolvió?"></textarea>
+            </div>
+
+            <div class="alerta" id="alerta-res"></div>
+
+            <div class="modal-acciones">
+                <button class="btn-cancelar" id="res-cancelar">Cancelar</button>
+                <button class="btn-guardar" id="res-guardar">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="versionado">PWA v0.5 — TODA Contraloría</div>
 
     <script src="api.js"></script>
     <script src="app.js"></script>
     <script>
-        // Mostrar/ocultar footer según vista activa
-        function _checkFooter() {
-            const vis = document.getElementById('vista-captura');
-            const foot = document.getElementById('footer-acciones');
-            if (vis && foot) {
-                foot.style.display = (vis.style.display === 'none' || !vis.style.display) ? 'none' : '';
-            }
+        // Mostrar/ocultar footers según vista activa
+        function _checkFooters() {
+            const captura = document.getElementById('vista-captura');
+            const conc = document.getElementById('vista-conciliacion');
+            const footCap = document.getElementById('footer-captura');
+            const footConc = document.getElementById('footer-conciliacion');
+
+            const capVisible = captura && captura.style.display && captura.style.display !== 'none';
+            const concVisible = conc && conc.style.display && conc.style.display !== 'none';
+
+            if (footCap) footCap.style.display = capVisible ? '' : 'none';
+            if (footConc) footConc.style.display = concVisible ? '' : 'none';
         }
-        const _obs = new MutationObserver(_checkFooter);
+        const _obs = new MutationObserver(_checkFooters);
         document.addEventListener('DOMContentLoaded', () => {
-            const v = document.getElementById('vista-captura');
-            if (v) _obs.observe(v, { attributes: true, attributeFilter: ['style'] });
-            _checkFooter();
+            ['vista-captura', 'vista-conciliacion'].forEach(id => {
+                const v = document.getElementById(id);
+                if (v) _obs.observe(v, { attributes: true, attributeFilter: ['style'] });
+            });
+            _checkFooters();
         });
     </script>
 
