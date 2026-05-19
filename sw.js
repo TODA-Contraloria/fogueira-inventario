@@ -1,13 +1,16 @@
 // ====================================================
-// FOGUEIRA PWA - Service Worker v0.4
+// FOGUEIRA PWA - Service Worker v0.7-2026-05-10
 // ----------------------------------------------------
 // Estrategia:
 //   - HTML: network-first (siempre la versión nueva si hay red)
 //   - JS/CSS/imágenes: cache-first (rápido)
 //   - API: pasa directo a la red (no se cachea)
+// ----------------------------------------------------
+// CHANGELOG:
+//   v0.7-2026-05-10: bump por fix flag sincronizado en app.js
+//   v0.4: versión previa
 // ====================================================
-
-const CACHE_VERSION = 'fogueira-pwa-v0.4';
+const CACHE_VERSION = 'fogueira-pwa-v0.7-2026-05-10';
 const ARCHIVOS_CACHE = [
   './',
   './index.html',
@@ -17,7 +20,6 @@ const ARCHIVOS_CACHE = [
   './icon-192.png',
   './icon-512.png'
 ];
-
 // Instalar: cachear archivos base
 self.addEventListener('install', (event) => {
   console.log('[SW] Instalando ' + CACHE_VERSION);
@@ -27,7 +29,6 @@ self.addEventListener('install', (event) => {
       .then(() => self.skipWaiting())
   );
 });
-
 // Activar: limpiar caches viejos
 self.addEventListener('activate', (event) => {
   console.log('[SW] Activando ' + CACHE_VERSION);
@@ -44,20 +45,16 @@ self.addEventListener('activate', (event) => {
     }).then(() => self.clients.claim())
   );
 });
-
 // Fetch: estrategias por tipo
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
-
   // No interceptar peticiones a Apps Script (siempre red, sin cache)
   if (url.hostname.includes('script.google.com') || 
       url.hostname.includes('googleusercontent.com')) {
     return;
   }
-
   // Solo GET
   if (event.request.method !== 'GET') return;
-
   // HTML: network-first (para que actualizaciones lleguen rápido)
   if (event.request.mode === 'navigate' || 
       event.request.destination === 'document') {
@@ -74,7 +71,6 @@ self.addEventListener('fetch', (event) => {
     );
     return;
   }
-
   // JS, CSS, imágenes: cache-first
   event.respondWith(
     caches.match(event.request).then((cached) => {
@@ -90,7 +86,6 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
-
 // Mensaje desde la app: forzar actualización
 self.addEventListener('message', (event) => {
   if (event.data && event.data.tipo === 'SKIP_WAITING') {
