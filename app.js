@@ -1,6 +1,11 @@
 // ====================================================
 // FOGUEIRA PWA - Lógica principal
 // CAMBIO 09/05/2026: toggle Activas/Cerradas + reimprimir cédula
+// CAMBIO 10/05/2026: fix definitivo flag `sincronizado` (reloj de arena fantasma)
+//   - procesarColaSync persiste cada éxito inmediatamente (no espera al final)
+//   - autoCorregirSincronizacion() compara con backend y autocorrije flags
+//   - autocorrección al volver al foco + cada 30s + antes de finalizar grupo
+//   - botón "Refrescar" manual en barra de captura
 // ====================================================
 
 const STORAGE_KEY = 'fogueira_pwa_sesion';
@@ -20,7 +25,7 @@ let conciliacionData = null;
 let busquedaConc = '';
 let filtroConc = 'ATENCION';
 
-let tipoSesionFiltro = 'ACTIVAS';   // NUEVO
+let tipoSesionFiltro = 'ACTIVAS';
 
 function $(id) { return document.getElementById(id); }
 function $$(sel) { return document.querySelectorAll(sel); }
@@ -71,6 +76,12 @@ function actualizarConexion() {
 window.addEventListener('online', actualizarConexion);
 window.addEventListener('offline', actualizarConexion);
 
+// 10/05/2026: al volver a primer plano, autocorrige
+window.addEventListener('focus', () => { autoCorregirSincronizacion(true); });
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') autoCorregirSincronizacion(true);
+});
+
 // ====================================================
 // LOGIN
 // ====================================================
@@ -118,7 +129,7 @@ async function hacerLogout() {
 }
 
 // ====================================================
-// SESIONES — toggle Activas/Cerradas
+// SESIONES
 // ====================================================
 async function irASesiones() {
     mostrarVista('vista-sesiones');
@@ -202,19 +213,17 @@ async function cargarSesiones() {
         const grupo = obtenerGrupoDelRol(sesionActual.rol);
         lista.innerHTML = filtradas.map(s => renderSesion(s, grupo)).join('');
 
-        // Click en tarjeta (excluir clicks en botones internos)
         $$('.tarjeta-sesion').forEach(t => {
             t.addEventListener('click', (ev) => {
-                if (ev.target.closest('[data-accion]')) return;  // dejar que el botón maneje
+                if (ev.target.closest('[data-accion]')) return;
                 const folio = t.dataset.folio;
                 const estatus = t.dataset.estatus;
                 if (estatus === 'EN_CONCILIACION') irAConciliar(folio);
-                else if (estatus === 'CERRADA') return;  // sin acción default
+                else if (estatus === 'CERRADA') return;
                 else entrarASesion(folio);
             });
         });
 
-        // Botones internos (reimprimir)
         $$('[data-accion="reimprimir"]').forEach(b => {
             b.addEventListener('click', (ev) => {
                 ev.stopPropagation();
@@ -281,7 +290,7 @@ function renderSesion(s, miGrupo) {
 }
 
 // ====================================================
-// REIMPRIMIR CÉDULA (sesión ya cerrada)
+// REIMPRIMIR CÉDULA
 // ====================================================
 async function reimprimirCedula(folio) {
     if (!folio) return;
@@ -290,7 +299,6 @@ async function reimprimirCedula(folio) {
         return;
     }
 
-    // Spinner sobre el botón
     const btn = document.querySelector('[data-accion="reimprimir"][data-folio="' + folio + '"]');
     let textoOriginal = '';
     if (btn) {
@@ -392,12 +400,28 @@ async function entrarASesion(folio) {
         $('cap-almacen').textContent = rProd.sesion.almacen_nombre;
         $('cap-grupo').textContent = grupo;
 
+        asegurarBotonRefrescar();
         mostrarVista('vista-captura');
         renderProductos();
     } catch (e) {
         alert('Error: ' + e.message);
         await cargarSesiones();
     }
+}
+
+// 10/05/2026: botón "Refrescar" en barra de captura
+function asegurarBotonRefrescar() {
+    if ($('btn-refrescar-sync')) return;
+    const barra = $('btn-fcat') ? $('btn-fcat').parentNode : null;
+    if (!barra) return;
+    const btn = document.createElement('button');
+    btn.id = 'btn-refrescar-sync';
+    btn.className = 'btn-filtro';
+    btn.title = 'Refrescar sincronización con servidor';
+    btn.innerHTML = '🔄';
+    btn.style.cssText = 'min-width:40px;';
+    btn.addEventListener('click', () => autoCorregirSincronizacion(false));
+    barra.insertBefore(btn, $('btn-fcat'));
 }
 
 // ====================================================
@@ -538,14 +562,25 @@ async function guardarFCat() {
     } catch (e) { alert('Error de red: ' + e.message); }
 }
 
+// ====================================================
+// COLA DE SINCRONIZACIÓN — 10/05/2026 fix race condition
+// ====================================================
 function leerCola() { try { return JSON.parse(localStorage.getItem(STORAGE_COLA) || '[]'); } catch (e) { return []; } }
 function escribirCola(c) { localStorage.setItem(STORAGE_COLA, JSON.stringify(c)); }
+
 function encolarSync(item) {
     const cola = leerCola();
     const filtrada = cola.filter(c => !(c.tipo === item.tipo && c.clave === item.clave));
     filtrada.push({...item, encolado_at: Date.now()});
     escribirCola(filtrada);
     actualizarContadores();
+}
+
+// Quita un item específico de la cola releyendo (evita race con nuevos encolamientos)
+function removerDeCola(tipo, clave) {
+    const cola = leerCola();
+    const filtrada = cola.filter(c => !(c.tipo === tipo && c.clave === clave));
+    escribirCola(filtrada);
 }
 
 let sincronizando = false;
@@ -556,22 +591,152 @@ async function procesarColaSync() {
     const cola = leerCola();
     if (cola.length === 0) return;
     sincronizando = true;
-    let nuevaCola = [];
-    for (const item of cola) {
-        try {
-            if (item.tipo === 'conteo') {
-                const r = await apiGuardarConteo(sesionActual.token, folioActivo, grupoActivo, item.clave, item.cantidad, item.observacion || '');
-                if (r.ok) { if (conteosLocales[item.clave]) conteosLocales[item.clave].sincronizado = true; }
-                else nuevaCola.push(item);
+
+    try {
+        for (const item of cola) {
+            try {
+                if (item.tipo === 'conteo') {
+                    const r = await apiGuardarConteo(sesionActual.token, folioActivo, grupoActivo, item.clave, item.cantidad, item.observacion || '');
+                    if (r && r.ok) {
+                        // Persistir éxito INMEDIATAMENTE (fix crítico)
+                        if (conteosLocales[item.clave]) {
+                            conteosLocales[item.clave].sincronizado = true;
+                            guardarBorrador();
+                        }
+                        removerDeCola('conteo', item.clave);
+                        renderProductos();
+                    }
+                    // Si !r.ok, item queda en cola para reintento
+                }
+            } catch (e) {
+                // Error de red: item queda en cola
+                console.warn('Sync error para clave ' + item.clave + ':', e.message);
             }
-        } catch (e) { nuevaCola.push(item); }
+        }
+    } finally {
+        sincronizando = false;
     }
-    escribirCola(nuevaCola);
-    guardarBorrador();
-    renderProductos();
-    sincronizando = false;
 }
 setInterval(procesarColaSync, 15000);
+
+// ====================================================
+// 10/05/2026: AUTO-CORRECCIÓN DE FLAG sincronizado
+// Compara estado local con backend y corrige flags fantasma.
+// silencioso=true → no muestra alert, solo registra en consola
+// silencioso=false → muestra resumen al usuario
+// ====================================================
+async function autoCorregirSincronizacion(silencioso) {
+    if (!navigator.onLine) {
+        if (!silencioso) alert('Sin conexión. No se puede verificar contra el servidor.');
+        return;
+    }
+    if (!sesionActual || !folioActivo || !grupoActivo) return;
+    if (sincronizando) {
+        if (!silencioso) alert('Hay una sincronización en curso. Intenta en unos segundos.');
+        return;
+    }
+
+    const btn = $('btn-refrescar-sync');
+    let html = '';
+    if (btn && !silencioso) {
+        html = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '⏳';
+    }
+
+    try {
+        // 1. Primero procesa lo que quede en cola
+        await procesarColaSync();
+
+        // 2. Re-fetch del backend
+        const rProd = await apiObtenerProductos(sesionActual.token, folioActivo, grupoActivo);
+        if (!rProd || !rProd.ok) {
+            if (!silencioso) alert('No se pudo consultar al servidor: ' + (rProd && (rProd.mensaje || rProd.error) || 'error desconocido'));
+            return;
+        }
+
+        // Construye mapa de lo que el backend tiene
+        const backendMap = {};
+        const tomarSiCapturado = (p) => {
+            if (p.ya_capturado) {
+                backendMap[p.clave] = {
+                    cantidad: p.cantidad_propia,
+                    observacion: p.observacion_propia || ''
+                };
+            }
+        };
+        (rProd.priorizados || []).forEach(tomarSiCapturado);
+        (rProd.otros || []).forEach(tomarSiCapturado);
+        (rProd.fuera_catalogo || []).forEach(tomarSiCapturado);
+
+        // 3. Compara y corrige
+        let corregidos = 0;
+        let agregadosDelBackend = 0;
+        let pendientesReales = 0;
+
+        // a) Para cada conteo local con flag false, verificar si backend ya lo tiene
+        Object.keys(conteosLocales).forEach(clave => {
+            const local = conteosLocales[clave];
+            const backend = backendMap[clave];
+
+            if (!local.sincronizado && backend) {
+                // Backend tiene el dato → cantidad coincide? Si sí, marcar sincronizado
+                if (Number(backend.cantidad) === Number(local.cantidad)) {
+                    local.sincronizado = true;
+                    corregidos++;
+                    // Asegurar que no quede en cola tampoco
+                    removerDeCola('conteo', clave);
+                }
+                // Si difiere, sigue pendiente: la cola eventualmente lo resincronizará
+                else {
+                    pendientesReales++;
+                }
+            } else if (!local.sincronizado && !backend) {
+                pendientesReales++;
+            }
+        });
+
+        // b) Productos que el backend tiene pero localmente no aparecen (otro dispositivo / sesión previa)
+        Object.keys(backendMap).forEach(clave => {
+            if (!conteosLocales[clave]) {
+                conteosLocales[clave] = {
+                    cantidad: backendMap[clave].cantidad,
+                    observacion: backendMap[clave].observacion,
+                    sincronizado: true,
+                    timestamp: Date.now()
+                };
+                agregadosDelBackend++;
+            }
+        });
+
+        guardarBorrador();
+        renderProductos();
+
+        if (!silencioso) {
+            let msg = '✅ Sincronización verificada\n\n';
+            msg += '• Corregidos (flag fantasma): ' + corregidos + '\n';
+            msg += '• Agregados desde servidor: ' + agregadosDelBackend + '\n';
+            msg += '• Pendientes reales por enviar: ' + pendientesReales;
+            alert(msg);
+        } else {
+            console.log('[auto-sync]', { corregidos, agregadosDelBackend, pendientesReales });
+        }
+    } catch (e) {
+        if (!silencioso) alert('Error de red: ' + e.message);
+        console.error('autoCorregir error:', e);
+    } finally {
+        if (btn && !silencioso) {
+            btn.disabled = false;
+            btn.innerHTML = html || '🔄';
+        }
+    }
+}
+// Cada 30s auto-corrige en silencio (solo si la app está visible y hay folio activo)
+setInterval(() => {
+    if (document.visibilityState === 'visible' && folioActivo && grupoActivo) {
+        autoCorregirSincronizacion(true);
+    }
+}, 30000);
 
 function guardarBorrador() {
     if (!folioActivo) return;
@@ -591,8 +756,22 @@ function setFiltro(f) {
 }
 
 async function finalizarMiGrupo() {
+    // 10/05/2026: PRIMERO auto-corregir contra backend, después validar pendientes
+    await autoCorregirSincronizacion(true);
+
     const pendientes = Object.values(conteosLocales).filter(c => !c.sincronizado).length;
-    if (pendientes > 0) { alert('Tienes ' + pendientes + ' conteos sin sincronizar.\nEspera a que se sincronicen antes de finalizar.'); return; }
+    if (pendientes > 0) {
+        const reintenta = confirm('Tienes ' + pendientes + ' conteos sin sincronizar.\n\n¿Reintentar ahora?\n\n(Cancelar abandona el proceso.)');
+        if (!reintenta) return;
+        await procesarColaSync();
+        await autoCorregirSincronizacion(true);
+        const pendientes2 = Object.values(conteosLocales).filter(c => !c.sincronizado).length;
+        if (pendientes2 > 0) {
+            alert('Aún quedan ' + pendientes2 + ' conteos sin enviar. Verifica tu conexión.');
+            return;
+        }
+    }
+
     const totalCap = Object.keys(conteosLocales).length;
     const sinCapturar = productos.length - totalCap;
     let msg = `¿Finalizar tu conteo como ${grupoActivo}?\n\nProductos capturados: ${totalCap}\n`;
@@ -886,7 +1065,7 @@ async function guardarResolucionMovil() {
 }
 
 // ====================================================
-// CERRAR INVENTARIO + GENERAR CÉDULA AUTOMÁTICAMENTE
+// CERRAR INVENTARIO + GENERAR CÉDULA
 // ====================================================
 async function cerrarInventario() {
     if (!confirm('¿Confirmas el cierre de la sesión?\n\nUna vez cerrada NO se puede reabrir.\nDespués se generará automáticamente la cédula PDF y el reporte Excel.')) return;
@@ -972,6 +1151,7 @@ async function inicio() {
             $('cap-almacen').textContent = '(offline)';
             $('cap-grupo').textContent = grupoActivo;
             $('btn-logout-header').style.display = 'inline-block';
+            asegurarBotonRefrescar();
             mostrarVista('vista-captura');
             renderProductos();
         } else {
@@ -993,9 +1173,11 @@ async function inicio() {
                 $('cap-almacen').textContent = '(restaurado)';
                 $('cap-grupo').textContent = grupoActivo;
                 $('btn-logout-header').style.display = 'inline-block';
+                asegurarBotonRefrescar();
                 mostrarVista('vista-captura');
                 renderProductos();
-                procesarColaSync();
+                // 10/05/2026: al restaurar, auto-corregir contra backend
+                procesarColaSync().then(() => autoCorregirSincronizacion(true));
             } else {
                 await irASesiones();
             }
@@ -1013,6 +1195,7 @@ async function inicio() {
             $('cap-almacen').textContent = '(offline)';
             $('cap-grupo').textContent = grupoActivo;
             $('btn-logout-header').style.display = 'inline-block';
+            asegurarBotonRefrescar();
             mostrarVista('vista-captura');
             renderProductos();
         } else {
