@@ -1,0 +1,10 @@
+# Instrucciones internas Claude — no público
+CLAUDE.md
+.claude/
+
+# Backups locales — no subir
+_backup_local/
+
+# Sistema
+.DS_Store
+Thumbs.db

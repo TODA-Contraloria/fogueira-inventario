@@ -6,6 +6,9 @@
 //   - autoCorregirSincronizacion() compara con backend y autocorrije flags
 //   - autocorrección al volver al foco + cada 30s + antes de finalizar grupo
 //   - botón "Refrescar" manual en barra de captura
+// CAMBIO 18/05/2026: guardado de resolución más rápido
+//   - tras guardar partida, actualiza estado local + recalcula KPIs en cliente
+//   - elimina recarga de 562 partidas (apiObtenerConciliacion) tras cada guardado
 // ====================================================
 
 const STORAGE_KEY = 'fogueira_pwa_sesion';
@@ -930,7 +933,7 @@ function renderPartida(p) {
     const finalVal = p.cantidad_final !== null ? p.cantidad_final : (p.cantidad_sugerida !== null ? p.cantidad_sugerida : '—');
 
     return `
-        <div class="${clase}">
+        <div class="${clase}" data-clave="${escapeHtml(String(p.clave))}">
             <div class="desc">${fcatBadge}${escapeHtml(p.descripcion)}</div>
             <div class="clave-row">
                 <span>Clave ${p.clave}</span>
@@ -1022,6 +1025,115 @@ function cerrarModalResolucion() {
     partidaActualResolucion = null;
 }
 
+// 18/05/2026: actualización local tras guardar resolución (sustituye cargarConciliacion)
+function actualizarPartidaLocal(clave, cantFinal, comentario, costoNuevo) {
+    if (!conciliacionData) return;
+    const p = conciliacionData.partidas.find(x => x.clave === clave);
+    if (!p) return;
+
+    p.cantidad_final = cantFinal;
+    p.comentario_resolucion = comentario;
+    p.resuelto = true;
+
+    if (costoNuevo !== null && costoNuevo !== undefined) {
+        p.costo_manual_asignado = true;
+        p.costo_manual_unitario = costoNuevo;
+        p.costo_manual_usuario = sesionActual && sesionActual.usuario || '';
+        p.costo_manual_fecha = Date.now();
+    }
+
+    recalcularKpisLocal();
+}
+
+function recalcularKpisLocal() {
+    if (!conciliacionData || !conciliacionData.kpis) return;
+    const partidas = conciliacionData.partidas || [];
+    const k = conciliacionData.kpis;
+    k.pendientes_resolver = partidas.filter(p => p.requiere_atencion && !p.resuelto).length;
+    k.requieren_costo_manual = partidas.filter(p => p.requiere_costo_manual && !p.costo_manual_asignado).length;
+    k.con_costo_manual = partidas.filter(p => p.costo_manual_asignado).length;
+}
+
+// 18/05/2026 v0.9: helpers DOM quirúrgicos — refrescan solo lo afectado, no las 562 cards
+function repintarKpisDOM() {
+    if (!conciliacionData || !conciliacionData.kpis) return;
+    const k = conciliacionData.kpis;
+    let kpisHTML = '';
+    kpisHTML += kpiCard('Total', k.total, '', '');
+    kpisHTML += kpiCard('Diferencia', k.con_diferencia, k.con_diferencia > 0 ? 'rojo' : 'verde', '');
+    kpisHTML += kpiCard('Pendientes', k.pendientes_resolver, k.pendientes_resolver > 0 ? 'amarillo' : 'verde', '');
+    kpisHTML += kpiCard('Cobertura', (k.cobertura_pct || 0) + '%', '', '');
+    if ((k.requieren_costo_manual || 0) > 0) kpisHTML += kpiCard('Sin costo', k.requieren_costo_manual, 'rojo', 'capturar');
+    if ((k.con_costo_manual || 0) > 0) kpisHTML += kpiCard('$ manual', k.con_costo_manual, 'dorado', '');
+    const cont = $('conc-kpis');
+    if (cont) cont.innerHTML = kpisHTML;
+}
+
+function actualizarBotonCerrarDOM() {
+    if (!conciliacionData || !conciliacionData.kpis) return;
+    const k = conciliacionData.kpis;
+    const btn = $('btn-cerrar-inv');
+    if (!btn) return;
+    const bloqueoCosto = (k.requieren_costo_manual || 0) > 0;
+    if (k.pendientes_resolver === 0 && !bloqueoCosto) {
+        btn.disabled = false;
+        btn.textContent = 'Cerrar inventario';
+    } else if (bloqueoCosto && k.pendientes_resolver === 0) {
+        btn.disabled = true;
+        btn.textContent = 'Faltan ' + k.requieren_costo_manual + ' costos';
+    } else {
+        btn.disabled = true;
+        btn.textContent = 'Faltan ' + k.pendientes_resolver + ' por resolver';
+    }
+}
+
+function partidaCumpleFiltro(p) {
+    if (filtroConc === 'ATENCION' && !p.requiere_atencion) return false;
+    if (filtroConc === 'PENDIENTES' && !(p.requiere_atencion && !p.resuelto)) return false;
+    if (busquedaConc) {
+        const q = busquedaConc.toLowerCase();
+        const okDesc = (p.descripcion || '').toLowerCase().indexOf(q) !== -1;
+        const okClave = String(p.clave).toLowerCase().indexOf(q) !== -1;
+        if (!okDesc && !okClave) return false;
+    }
+    return true;
+}
+
+function repintarPartidaCardDOM(clave, opciones) {
+    opciones = opciones || {};
+    if (!conciliacionData) return;
+    const p = conciliacionData.partidas.find(x => x.clave === clave);
+    if (!p) return;
+    const lista = $('conc-lista');
+    if (!lista) return;
+
+    const sel = '[data-clave="' + (window.CSS && CSS.escape ? CSS.escape(String(clave)) : String(clave).replace(/"/g, '\\"')) + '"]';
+    const cardViejo = lista.querySelector(sel);
+    const cumpleFiltro = partidaCumpleFiltro(p);
+
+    if (!cumpleFiltro) {
+        if (cardViejo) cardViejo.remove();
+        if (!lista.querySelector('.partida-card')) {
+            lista.innerHTML = '<div class="empty-state">Sin partidas con el filtro aplicado.</div>';
+        }
+        return;
+    }
+
+    const tmp = document.createElement('div');
+    tmp.innerHTML = renderPartida(p).trim();
+    const nuevoEl = tmp.firstElementChild;
+    if (!nuevoEl) return;
+    if (opciones.pendienteSync) nuevoEl.classList.add('sync-pendiente');
+
+    if (cardViejo) {
+        cardViejo.replaceWith(nuevoEl);
+    } else {
+        const empty = lista.querySelector('.empty-state');
+        if (empty) empty.remove();
+        lista.appendChild(nuevoEl);
+    }
+}
+
 async function guardarResolucionMovil() {
     const p = partidaActualResolucion;
     if (!p) return;
@@ -1047,21 +1159,44 @@ async function guardarResolucionMovil() {
     const cambioCosto = costoNuevo !== null &&
         (!p.costo_manual_asignado || Math.abs(costoNuevo - (Number(p.costo_manual_unitario) || 0)) > 0.0001);
 
-    const btn = $('res-guardar');
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner"></span>Guardando...';
+    // 18/05/2026 v0.9: UI optimista — aplicar cambio local + cerrar modal INMEDIATO,
+    // sincronizar con backend en background. Si falla, revertir y avisar.
+    const snapshot = {
+        cantidad_final: p.cantidad_final,
+        comentario_resolucion: p.comentario_resolucion,
+        resuelto: p.resuelto,
+        costo_manual_asignado: p.costo_manual_asignado,
+        costo_manual_unitario: p.costo_manual_unitario,
+        costo_manual_usuario: p.costo_manual_usuario,
+        costo_manual_fecha: p.costo_manual_fecha
+    };
+    const claveActual = p.clave;
+
+    actualizarPartidaLocal(claveActual, cant, com, cambioCosto ? costoNuevo : null);
+    repintarKpisDOM();
+    repintarPartidaCardDOM(claveActual, { pendienteSync: true });
+    actualizarBotonCerrarDOM();
+    cerrarModalResolucion();
 
     try {
         if (cambioCosto) {
-            const r1 = await apiAsignarCostoManual(sesionActual.token, folioConc, p.clave, costoNuevo, '');
-            if (!r1.ok) { showAlert('alerta-res', 'Error costo: ' + (r1.mensaje || r1.error), 'error'); return; }
+            const r1 = await apiAsignarCostoManual(sesionActual.token, folioConc, claveActual, costoNuevo, '');
+            if (!r1.ok) throw new Error(r1.mensaje || r1.error || 'Error costo');
         }
-        const r2 = await apiGuardarResolucion(sesionActual.token, folioConc, p.clave, cant, com);
-        if (!r2.ok) { showAlert('alerta-res', r2.mensaje || r2.error, 'error'); return; }
-        cerrarModalResolucion();
-        await cargarConciliacion();
-    } catch (e) { showAlert('alerta-res', 'Error de red: ' + e.message, 'error');
-    } finally { btn.disabled = false; btn.textContent = 'Guardar'; }
+        const r2 = await apiGuardarResolucion(sesionActual.token, folioConc, claveActual, cant, com);
+        if (!r2.ok) throw new Error(r2.mensaje || r2.error || 'Error guardando');
+        // confirmado: quitar marca de pendiente del card
+        repintarPartidaCardDOM(claveActual, { pendienteSync: false });
+    } catch (e) {
+        // revertir snapshot
+        const pp = conciliacionData && conciliacionData.partidas.find(x => x.clave === claveActual);
+        if (pp) Object.assign(pp, snapshot);
+        recalcularKpisLocal();
+        repintarKpisDOM();
+        repintarPartidaCardDOM(claveActual, { pendienteSync: false });
+        actualizarBotonCerrarDOM();
+        showAlert('alerta-conciliacion', '⚠ No se guardó la resolución (clave ' + claveActual + '): ' + e.message + '. Cambio revertido.', 'error');
+    }
 }
 
 // ====================================================

@@ -1,5 +1,5 @@
 // ====================================================
-// FOGUEIRA PWA - Service Worker v0.7-2026-05-10
+// FOGUEIRA PWA - Service Worker v0.9-2026-05-18
 // ----------------------------------------------------
 // Estrategia:
 //   - HTML: network-first (siempre la versión nueva si hay red)
@@ -7,10 +7,13 @@
 //   - API: pasa directo a la red (no se cachea)
 // ----------------------------------------------------
 // CHANGELOG:
+//   v0.9-2026-05-18: guardado de resolución con UI optimista + DOM quirúrgico
+//                    (modal cierra inmediato, sync en background, revierte si falla)
+//   v0.8-2026-05-18: optimización guardado de resolución (sin recargar 562 partidas)
 //   v0.7-2026-05-10: bump por fix flag sincronizado en app.js
 //   v0.4: versión previa
 // ====================================================
-const CACHE_VERSION = 'fogueira-pwa-v0.7-2026-05-10';
+const CACHE_VERSION = 'fogueira-pwa-v0.9-2026-05-18';
 const ARCHIVOS_CACHE = [
   './',
   './index.html',
